@@ -1,0 +1,13 @@
+<RCC>
+  <qresource>
+    <file>chatroom/pause.png</file>
+    <file>chatroom/play.png</file>
+    <file>chatroom/recording.png</file>
+    <file>chatroom/stop.png</file>
+    <file>chatroom/webcam.png</file>
+    <file>chatroom/mute.png</file>
+    <file>chatroom/numute.png</file>
+    <file>icon/girl.png</file>
+    <file>icon/man.png</file>
+  </qresource>
+</RCC>
