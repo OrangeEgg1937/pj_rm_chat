@@ -11,11 +11,14 @@ class ChatroomClient:
         self.host_ip = f"ws://{host_ip}:{port}"  # forming a host connection address
         self.username = username
         self.hostList = dict()
-        self.isReady = False
+        self.isConnected = False
+        self.destination = None
         self.request_info = ChatData(data=self.username,
                                      header=ChatHeader.REQUEST_HOST_LIST,
                                      senderIP=self.host_ip,
                                      name=self.username)
+        self.connectionID = None
+        self.buffer = None
 
     # see all available host
     def request_host_list(self):
@@ -34,6 +37,48 @@ class ChatroomClient:
 
             # copy the data to the host list
             self.hostList = server_info.data.copy()
+
+    # connect to the host
+    def connect_to_host(self, destination: str):
+        # update the destination
+        self.destination = destination
+        url = f"ws://{destination}"
+
+        # create a connection data
+        connection_data = ChatData(data=self.username,
+                                   header=ChatHeader.INIT_CONNECTION,
+                                   senderIP=self.host_ip,
+                                   name=self.username)
+
+        # connect to the host
+        with connect(url) as websocket:
+            # send the connection data
+            websocket.send(json.dumps(connection_data.to_json()))
+
+            # process the response
+            data = websocket.recv()
+            print(f"Response from the host: {data}")
+            self.isConnected = True
+            self.connectionID = data
+
+    # general data transfer to the host, if there is a data received, it will be stored in the buffer
+    def send_data(self, data: str, header: ChatHeader):
+        # create a connection data
+        connection_data = ChatData(data=data,
+                                   header=header,
+                                   senderIP=self.host_ip,
+                                   name=self.username)
+
+        # connect to the host
+        with connect(self.destination) as websocket:
+            # send the connection data
+            websocket.send(json.dumps(connection_data.to_json()))
+
+            # process the response
+            data = websocket.recv()
+            print(f"Response from the host: {data}")
+
+            self.buffer = data
 
 
 # script debug

@@ -12,7 +12,8 @@ class ChatroomHost:
         self.host_ip = host_ip
         self.host_name = f"{host_name}_{port}"
         self.port = port
-        self.connected_clients = set()
+        self.__connected_clients = dict()
+        self.public_list = dict()
 
     async def __connection_handler(self, websocket, path):
 
@@ -28,9 +29,18 @@ class ChatroomHost:
                 continue
 
             if received_data.header == ChatHeader.INIT_CONNECTION:
-                self.connected_clients.add(websocket)
-                await websocket.send("You are connected to this chat room")
+                # giving the client a connection ID
+                self.__connected_clients[len(self.__connected_clients)] = received_data
+                self.public_list[len(self.__connected_clients)] = \
+                    f"{received_data.name}_{len(self.__connected_clients)-1}"
+                await websocket.send(len(self.__connected_clients)-1)
                 continue
+
+            if received_data.header == ChatHeader.REQUEST_USER_LIST:
+                # give the user list to the client
+                await websocket.send(json.dumps(self.public_list))
+                continue
+
 
     async def start(self):
         print(f"Host: {self.host_name} is starting...")

@@ -17,7 +17,6 @@ class ConnectionHandler:
         # initialize all the necessary objects
         self.mainWindow = mainWindow
         self.ui = ui
-        self.connected = False
         self.connection_type = 0  # 0: no yet connect, 1: host, 2: client
         self.client = client
         self.host = None
@@ -64,8 +63,31 @@ class ConnectionHandler:
         # get the selected item from the list
         selected_item = self.ui.chatroom_list.currentItem().data(Qt.UserRole)
 
+        # if the selected item is None or unknown object, then return
+        if selected_item is None or not isinstance(selected_item, dict):
+            return
+
         # print the selected item
         print(f"Selected item: {selected_item}\n IP address: {selected_item}")
+
+        # set destination
+        destination = selected_item["senderIP"]
+        # try to connect to the host
+        try:
+            # init a connection to the host
+            self.client.connect_to_host(destination)
+            # disable the connection plane
+            self.setConnectionPlaneEnabled(False)
+            # set the success message
+            self.ui.StatusMsg.setText(f"{selected_item["name"]}")
+            self.ui.connectionMsg.setText(f"Connected!")
+            # set the connection type
+            self.connection_type = 2
+        except Exception as e:
+            # set the error message
+            self.ui.StatusMsg.setText("Connection failed, try another one")
+            self.ui.connectionMsg.setText(f"Failed")
+            print(f"Error: {e}")
 
     # search the host
     def __search_host(self, destination: str):

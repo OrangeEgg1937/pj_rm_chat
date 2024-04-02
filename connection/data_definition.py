@@ -11,6 +11,7 @@ class ChatHeader(Enum):
     VIDEO = 4
     REQUEST_HOST_LIST = 5
     REGISTER_HOST = 6
+    REQUEST_USER_LIST = 7
 
 
 # define the Chat data
