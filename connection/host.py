@@ -10,16 +10,16 @@ from websockets.server import serve
 class ChatroomHost:
     def __init__(self, host_ip: str, host_name: str = "anonymous", port: int = 32800):
         self.host_ip = host_ip
-        self.host_name = host_name
+        self.host_name = f"{host_name}_{port}"
         self.port = port
         self.connected_clients = set()
 
     async def __connection_handler(self, websocket, path):
-        print(f"Receive a connection: {websocket}")
 
         # response to the client
         async for message in websocket:
             received_data = ChatData.from_json(message)
+            print(f"[Logs] Receive a connection: {received_data.senderIP}|{received_data.name}")
 
             # check the header type
             if received_data.header == ChatHeader.NOP:
@@ -33,6 +33,7 @@ class ChatroomHost:
                 continue
 
     async def start(self):
+        print(f"Host: {self.host_name} is starting...")
         try:
             # init a host information to Chatroom server
             async with websockets.connect(f"ws://{self.host_ip}:60000") as websocket:
@@ -56,15 +57,15 @@ class ChatroomHost:
 
 # for script debug
 if __name__ == "__main__":
-    port = 32800
+    test_port = 32800
 
     # check argument
     parser = argparse.ArgumentParser(description="Chatroom Host")
     parser.add_argument("-p", type=int, help="Host port")
     args = parser.parse_args()
     if args.p:
-        port = args.p
+        test_port = args.p
 
     # create a host object
-    host = ChatroomHost("localhost", port=port)
+    host = ChatroomHost("localhost", port=test_port)
     asyncio.run(host.start())

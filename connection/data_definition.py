@@ -24,8 +24,15 @@ class ChatData:
 
     # Construct by a json object
     @classmethod
-    def from_json(cls, receive):
+    def from_json(cls, receive, process=0):
         data = json.loads(receive)
+        if process == 1:
+            server_data = json.loads(data["data"])
+            return cls(data=server_data,
+                       header=ChatHeader(data["header"]),
+                       senderIP=data["senderIP"],
+                       name=data["name"])
+
         return cls(data=data["data"],
                    header=ChatHeader(data["header"]),
                    senderIP=data["senderIP"],
@@ -38,3 +45,10 @@ class ChatData:
             "senderIP": self.senderIP,
             "name": self.name
         }
+
+    @staticmethod
+    def default_to_json(obj):
+        if isinstance(obj, ChatData):
+            return obj.to_json()
+
+        raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")

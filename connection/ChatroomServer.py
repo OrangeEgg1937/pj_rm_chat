@@ -15,19 +15,20 @@ class ChatroomServer:
         self.port = port
 
     async def __connection_handler(self, websocket, path):
-        print(f"Receive a connection: {websocket}")
-
         # response to the client
         async for message in websocket:
             received_data = ChatData.from_json(message)
+            print(f"[New Connection] Receive a connection: {received_data.senderIP}|{received_data.name}")
 
             # check the received data header
             if received_data.header == ChatHeader.REQUEST_HOST_LIST:
-                data = ChatData(data=json.dumps(self.hostList),
+                hostList = json.dumps(self.hostList, default=ChatData.default_to_json)
+                data = ChatData(data=hostList,
                                 header=ChatHeader.REQUEST_HOST_LIST,
                                 senderIP=self.host_ip,
                                 name="ChatroomServer")
-                await websocket.send("Chatroom available")
+                send_data = json.dumps(data.to_json())
+                await websocket.send(send_data)
                 continue
 
             # register a chatroom host
