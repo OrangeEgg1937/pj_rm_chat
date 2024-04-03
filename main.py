@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     # import the UI logic related class
     connectionHandler = ConnectionHandler(mainWindow, ui, client)
-    TextMessageHandler = TextMessageHandler(mainWindow, ui, client)
+    TextMessageHandler = TextMessageHandler(mainWindow, ui, connectionHandler)
 
     # show the main window
     mainWindow.show()

@@ -10,16 +10,17 @@ from connection.host import ChatroomHost
 from connection.client import ChatroomClient
 from connection.data_definition import ChatHeader, ChatData
 from websockets.sync.client import connect as ws_connect
+from qasync import QEventLoop
 
 
 class ConnectionHandler:
-    def __init__(self, mainWindow: QMainWindow, ui: Ui_MainWindow, client: ChatroomClient):
+    def __init__(self, mainWindow: QMainWindow, ui: Ui_MainWindow, client: ChatroomClient, host: ChatroomHost = None):
         # initialize all the necessary objects
         self.mainWindow = mainWindow
         self.ui = ui
         self.connection_type = 0  # 0: no yet connect, 1: host, 2: client
         self.client = client
-        self.host = None
+        self.host = host
 
         # register the signal
         self.ui.connectBtn.clicked.connect(self.__onConnectButtonClicked)
@@ -68,14 +69,16 @@ class ConnectionHandler:
             return
 
         # print the selected item
-        print(f"Selected item: {selected_item}\n IP address: {selected_item}")
+        print(f"Selected item-IP address: {selected_item["senderIP"]}")
 
         # set destination
         destination = selected_item["senderIP"]
         # try to connect to the host
         try:
             # init a connection to the host
-            self.client.connect_to_host(destination)
+            self.thread = QThread()
+            self.thread.run = (lambda: self.client.connect_to_host(destination))
+            self.thread.start()
             # disable the connection plane
             self.setConnectionPlaneEnabled(False)
             # set the success message
@@ -128,4 +131,14 @@ class ConnectionHandler:
         self.ui.connectBtn.setEnabled(available)
         self.ui.connectToLocalhost.setEnabled(available)
         self.ui.connect_to_chat.setEnabled(available)
+
+    # define a public method for broadcasting message
+    def broadcast_message(self, message: str, header: ChatHeader):
+        # check the connection type
+        if self.connection_type != 1:
+            print("You are not the host")
+            return
+        loop = QEventLoop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.host.broadcast_message(message, -1, header))
 

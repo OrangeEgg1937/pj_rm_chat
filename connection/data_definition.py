@@ -11,7 +11,7 @@ class ChatHeader(Enum):
     VIDEO = 4
     REQUEST_HOST_LIST = 5
     REGISTER_HOST = 6
-    REQUEST_USER_LIST = 7
+    CHATROOM_LIST = 7
 
 
 # define the Chat data
@@ -25,8 +25,13 @@ class ChatData:
 
     # Construct by a json object
     @classmethod
-    def from_json(cls, receive, process=0):
+    def from_json(cls, receive, process=-1):
         data = json.loads(receive)
+        if process == -1:
+            # auto check the header type
+            if data["header"] == ChatHeader.TEXT.value:
+                process = 0
+
         if process == 1:
             server_data = json.loads(data["data"])
             return cls(data=server_data,

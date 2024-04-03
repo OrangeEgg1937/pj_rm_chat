@@ -208,9 +208,9 @@ class Ui_MainWindow(object):
         self.label_2 = QtWidgets.QLabel(self.centralwidget)
         self.label_2.setObjectName("label_2")
         self.verticalLayout.addWidget(self.label_2)
-        self.listWidget = QtWidgets.QListWidget(self.centralwidget)
-        self.listWidget.setObjectName("listWidget")
-        self.verticalLayout.addWidget(self.listWidget)
+        self.memberlist = QtWidgets.QListWidget(self.centralwidget)
+        self.memberlist.setObjectName("memberlist")
+        self.verticalLayout.addWidget(self.memberlist)
         self.verticalLayout_3 = QtWidgets.QVBoxLayout()
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.chat_title = QtWidgets.QLabel(self.centralwidget)
@@ -366,7 +366,7 @@ class Ui_MainWindow(object):
         self.label_7.setText(_translate("MainWindow", "Status:"))
         self.StatusMsg.setText(_translate("MainWindow", "N/A"))
         self.disconnect_btn.setText(_translate("MainWindow", "Disconnect"))
-import UI.icon_rc
+import icon_rc
 
 
 if __name__ == "__main__":

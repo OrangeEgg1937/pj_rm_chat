@@ -454,7 +454,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QListWidget" name="listWidget"/>
+       <widget class="QListWidget" name="memberlist"/>
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_3">
