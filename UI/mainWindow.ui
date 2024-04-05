@@ -510,6 +510,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="tipsMessage">
+        <property name="text">
+         <string>Tips:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
          <widget class="QPushButton" name="pushButton_2">

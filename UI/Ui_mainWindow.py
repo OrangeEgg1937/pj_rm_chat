@@ -366,7 +366,7 @@ class Ui_MainWindow(object):
         self.label_7.setText(_translate("MainWindow", "Status:"))
         self.StatusMsg.setText(_translate("MainWindow", "N/A"))
         self.disconnect_btn.setText(_translate("MainWindow", "Disconnect"))
-import icon_rc
+import UI.icon_rc
 
 
 if __name__ == "__main__":

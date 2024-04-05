@@ -9,10 +9,11 @@ from websockets.sync.client import connect
 # define the Client class
 class ChatroomClient:
     def __init__(self, host_ip, port: str = "a", username: str = "anonymous"):
+        self.websocket = None
         self.host_ip = f"ws://{host_ip}:{port}"  # forming a host connection address
         self.username = username
         self.hostList = dict()
-        self.isConnected = False
+        self.__isConnected = False
         self.destination = None
         self.request_info = ChatData(data=self.username,
                                      header=ChatHeader.REQUEST_HOST_LIST,
@@ -39,6 +40,23 @@ class ChatroomClient:
             raise ValueError(f"Header {header} is not in the header list")
         self.__header_callback[header].append(callback)
 
+    # remove a callback from the header
+    def disconnect_header_callback(self, header: ChatHeader, callback):
+        if self.__header_callback is None:
+            self.__init_header_callback()
+        if header not in self.__header_callback:
+            raise ValueError(f"Header {header} is not in the header list")
+        self.__header_callback[header].remove(callback)
+
+    # process the header callback
+    def __process_header_callback(self, header: ChatHeader, data):
+        if header not in self.__header_callback:
+            print(f"[NOP] Header {header} is not in the header list")
+            return
+        print(f"Processing header callback function: {header}")
+        for callback in self.__header_callback[header]:
+            callback(data)
+
     # see all available host
     def request_host_list(self):
         print(f"Requesting host list from {self.host_ip}")
@@ -62,41 +80,54 @@ class ChatroomClient:
         # update the destination
         self.destination = destination
 
-        # create a connection data
-        connection_data = ChatData(data=self.username,
-                                   header=ChatHeader.INIT_CONNECTION,
-                                   senderIP=self.host_ip,
-                                   name=self.username)
-
         # start the listener
         asyncio.run(self.__listener())
 
     # listen to the host incoming message
     async def __listener(self):
-        # connect to the host
-        async with websockets.connect(f"ws://{self.destination}") as websocket:
-            # create a connection data
-            connection_data = ChatData(data=self.username,
-                                       header=ChatHeader.INIT_CONNECTION,
-                                       senderIP=self.host_ip,
-                                       name=self.username)
-            # send the connection data
-            await websocket.send(json.dumps(connection_data.to_json()))
+        # starting a connection to the host
+        try:
+            async with websockets.connect(f"ws://{self.destination}") as ws:
+                self.websocket = ws
+                while True:
+                    if (self.__isConnected is False) and (self.connectionID is None):
+                        # create a connection data
+                        connection_data = ChatData(data=self.username,
+                                                   header=ChatHeader.INIT_CONNECTION,
+                                                   senderIP=self.host_ip,
+                                                   name=self.username)
+                        sending_data = json.dumps(connection_data.to_json())
+                        # send the connection ID to the host
+                        await ws.send(sending_data)
 
-            print(f"client connected to {self.destination}")
+                    # receive the message
+                    message = await ws.recv()
 
-            # get the connection ID first
-            data = await websocket.recv()
-            self.connectionID = int(data)
-            self.isConnected = True
+                    # initial connection checking
+                    if self.__isConnected is False:
+                        if message.isdigit():
+                            self.__isConnected = True
+                            self.connectionID = int(message)
+                            print(f"Connection ID: {self.connectionID}")
+                            continue
 
-            print(f"client received a ID: {data}")
+                    package = ChatData.from_json(message)
+                    print(f"Received a message from {package.senderIP}: {package.data}")
 
-            # start listening to the host incoming message
-            async for message in websocket:
-                received_data = ChatData.from_json(message)
-                self.buffer = received_data.data
-                print(f"Received data: {self.buffer}")
+                    # process the header callback
+                    self.__process_header_callback(package.header, package)
+
+        except websockets.exceptions.ConnectionClosedOK:
+            print(f"Connection closed: {self.destination}")
+        except websockets.exceptions.ConnectionClosedError:
+            print(f"Connection closed incorrectly: {self.destination}")
+        # clean up the connection
+        await self.websocket.close()
+        self.__isConnected = False
+        self.connectionID = None
+        self.buffer = None
+        print(f"Client disconnected from {self.destination}")
+        self.websocket = None
 
     # general data transfer to the host, if there is a data received, it will be stored in the buffer
     def send_data(self, data: str, header: ChatHeader):
@@ -106,19 +137,22 @@ class ChatroomClient:
                                    senderIP=self.host_ip,
                                    name=self.username)
 
-        # connect to the host
-        with connect(self.destination) as websocket:
-            # send the connection data
-            websocket.send(json.dumps(connection_data.to_json()))
+        # send the connection data
+        current_event_loop = asyncio.get_event_loop()
+        current_event_loop.create_task(self.websocket.send(json.dumps(connection_data.to_json())))
 
-            # process the response
-            data = websocket.recv()
-            print(f"Response from the host: {data}")
-
-            self.buffer = data
+    # disconnect the client from the host
+    async def disconnect(self):
+        if self.websocket is not None:
+            await self.websocket.close()
+            self.__isConnected = False
+            self.connectionID = None
+            self.buffer = None
+            print(f"Client disconnected from {self.destination}")
+            self.websocket = None
 
 
 # script debug
 if __name__ == "__main__":
-    temp = ChatroomClient("localhost", port=60000)
-    temp.request_host_list()
+    chatroom_user = ChatroomClient("localhost", port=60000)
+    chatroom_user.connect_to_host("localhost:32800")

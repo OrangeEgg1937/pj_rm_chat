@@ -54,11 +54,9 @@ class ChatroomServer:
                 try:
                     print(f"[Server] Checking {host}")
                     async with websockets.connect(f"ws://{host}", timeout=5) as websocket:
-                        checking = ChatData(data="Checking connection", header=ChatHeader.NOP,
-                                            senderIP=0, name="")
-                        await websocket.send(json.dumps(checking.to_json()))
-                        response = await websocket.recv()
-                        print(f"[Server] {host} is still connected")
+                        pong_waiter = await websocket.ping()
+                        latency = await pong_waiter
+                        print(f"[Server] {host} is still connected, latency:{latency}")
                 except Exception as e:
                     print(f"[Server] Host {host} is disconnected: {e}")
                     del self.hostList[host]
@@ -68,6 +66,7 @@ class ChatroomServer:
             start_server = websockets.serve(self.__connection_handler, self.host_ip, self.port)
             asyncio.get_event_loop().run_until_complete(start_server)
             asyncio.get_event_loop().create_task(self.check_host_connection())
+            print(f"Chatroom server is running on ws://{self.host_ip}:{self.port}")
             asyncio.get_event_loop().run_forever()
         except Exception as e:
             print(f"Error: {e}\n The IP address or port is already in use. Please try another one.")

@@ -1,7 +1,9 @@
 import sys
 import json
+import asyncio
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import Qt, QThread
+from qasync import QEventLoop
 
 from UI.Ui_mainWindow import Ui_MainWindow
 from connection.host import ChatroomHost
@@ -20,7 +22,9 @@ class TextMessageHandler:
 
         # register the signal
         self.ui.chat_input.returnPressed.connect(self.__onUserPressEnterInChat)
-        self.ui.disconnect_btn.clicked.connect(self.__broadcast_message_test)
+
+        # register the header callback
+        self.connectionHandler.connect_header_callback(ChatHeader.TEXT, self.__OnNewMessageComing)
 
     def __onUserPressEnterInChat(self):
         # get the message from the UI
@@ -31,14 +35,17 @@ class TextMessageHandler:
         # clear the chat input box
         self.ui.chat_input.clear()
 
-        # add the message into the chat box
-        self.ui.chatbox.append(f"{self.connectionHandler.client.username}: {message}")
+        # check if the client is connected
+        if self.connectionHandler.connection_type == 0:
+            return
 
-        print(f"Client selected IP is:{self.connectionHandler.client.host_ip}")
+        # build the full message
+        message = f"{self.connectionHandler.client.username} ({self.connectionHandler.client.connectionID}): {message}"
 
         # send the message to the server
-        # self.client.send_message(message)
+        self.connectionHandler.send_data(message, ChatHeader.TEXT)
 
-    def __broadcast_message_test(self):
-        self.connectionHandler.broadcast_message("Hello World", ChatHeader.TEXT)
-
+    def __OnNewMessageComing(self, data: ChatData):
+        # add the message into the chat box
+        message = data.data
+        self.ui.chatbox.append(message)
