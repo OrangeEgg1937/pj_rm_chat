@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt, QThread
 from UI.Ui_mainWindow import Ui_MainWindow
 from ConnectionHandler import ConnectionHandler
 from TextMessageHandler import TextMessageHandler
+from VoiceChatHandler import VoiceChatHandler
 from connection import client
 from qasync import QEventLoop
 
@@ -41,6 +42,7 @@ if __name__ == "__main__":
     # import the UI logic related class (Please add the function here)
     connectionHandler = ConnectionHandler(mainWindow=mainWindow, ui=ui, client=client, event_loop=event_loop)
     TextMessageHandler = TextMessageHandler(mainWindow, ui, connectionHandler)
+    voceChatHandler = VoiceChatHandler(mainWindow, ui, connectionHandler)
 
     """
     Do not modify the code below

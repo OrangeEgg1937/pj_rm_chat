@@ -519,7 +519,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
-         <widget class="QPushButton" name="pushButton_2">
+         <widget class="QPushButton" name="push_to_talk">
           <property name="text">
            <string/>
           </property>
@@ -551,7 +551,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_5">
+         <widget class="QPushButton" name="open_camera">
           <property name="text">
            <string/>
           </property>
@@ -569,7 +569,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_3">
+         <widget class="QPushButton" name="recording_voice">
           <property name="text">
            <string/>
           </property>

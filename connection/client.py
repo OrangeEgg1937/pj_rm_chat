@@ -130,16 +130,21 @@ class ChatroomClient:
         self.websocket = None
 
     # general data transfer to the host, if there is a data received, it will be stored in the buffer
-    def send_data(self, data: str, header: ChatHeader):
+    def send_data(self, data: str, header: ChatHeader, eventloop = None):
         # create a connection data
         connection_data = ChatData(data=data,
                                    header=header,
                                    senderIP=self.host_ip,
                                    name=self.username)
 
+        # check the event loop
+        if eventloop is None:
+            eventloop = asyncio.get_event_loop()
+
+        print(connection_data.data)
+
         # send the connection data
-        current_event_loop = asyncio.get_event_loop()
-        current_event_loop.create_task(self.websocket.send(json.dumps(connection_data.to_json())))
+        eventloop.create_task(self.websocket.send(json.dumps(connection_data.to_json())))
 
     # disconnect the client from the host
     async def disconnect(self):

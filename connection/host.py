@@ -63,6 +63,10 @@ class ChatroomHost:
                     print(f"Current public list: {chatroom_list}")
                     self.currentID = self.currentID + 1
                     await self.broadcast_message(chatroom_list, ChatHeader.CHATROOM_LIST)
+                elif data.header == ChatHeader.AUDIO:
+                    print(f"[Host - Audio] Received an audio from {data.name}")
+                    # broadcast the message to all clients
+                    print(f"Audio data: {data.data}")
 
             except websockets.exceptions.ConnectionClosedOK:
                 print(f"[Host - OnClose] Connection closed: {websocket}")
@@ -85,8 +89,8 @@ class ChatroomHost:
             chatroom_list = json.dumps({client_id: client_info.to_json() for client_id, client_info in self.public_list.items()})
             await self.broadcast_message(chatroom_list, ChatHeader.CHATROOM_LIST)
 
-    # broadcast the message to all clients
-    async def broadcast_message(self, message: str, header: ChatHeader = ChatHeader.TEXT):
+    # broadcast the message to all clients OR broadcast the message to all clients except the sender
+    async def broadcast_message(self, message: str, header: ChatHeader = ChatHeader.TEXT, ignoreSender=None):
         print("[Host- Broadcast] Sending a message to all clients")
 
         # build the message
@@ -97,9 +101,17 @@ class ChatroomHost:
         callback_threading = threading.Thread(target=self.__process_header_callback, args=(header, data))
         callback_threading.start()
 
+        # copy the list
+        receiver_list = self.__connected_clients.copy()
+
+        # check the value of sender
+        if ignoreSender is not None:
+            # remove the sender from the list
+            receiver_list.remove(ignoreSender)
+
         # send the message to all clients and checking connection
         try:
-            websockets.broadcast(self.__connected_clients, message)
+            websockets.broadcast(receiver_list, message)
         except websockets.exceptions.ConnectionClosedOK:
             print(f"One Client is disconnected")
 

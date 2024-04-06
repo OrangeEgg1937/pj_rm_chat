@@ -265,4 +265,4 @@ class ConnectionHandler:
         if self.connection_type == 1:
             self.broadcast_message(data, header)
         elif self.connection_type == 2:
-            self.client.send_data(data, header)
+            self.client.send_data(data, header, self.event_loop)

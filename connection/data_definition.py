@@ -1,5 +1,6 @@
 from enum import Enum
 import json
+import base64
 
 
 # define the Chat data type
@@ -27,6 +28,11 @@ class ChatData:
     @classmethod
     def from_json(cls, receive, process=-1):
         data = json.loads(receive)
+
+        # if header is audio, convert the data to bytes
+        if data["header"] == ChatHeader.AUDIO.value:
+            data["data"] = base64.b64decode(data["data"])
+
         if process == -1:
             # auto check the header type
             if data["header"] == ChatHeader.TEXT.value:
@@ -45,6 +51,9 @@ class ChatData:
                    name=data["name"])
 
     def to_json(self):
+        # encode to 64 if the data bytes
+        if isinstance(self.data, bytes):
+            self.data = base64.b64encode(self.data).decode('utf-8')
         return {
             "data": self.data,
             "header": self.header.value,
