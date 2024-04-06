@@ -141,10 +141,15 @@ class ChatroomClient:
         if eventloop is None:
             eventloop = asyncio.get_event_loop()
 
-        print(connection_data.data)
-
-        # send the connection data
-        eventloop.create_task(self.websocket.send(json.dumps(connection_data.to_json())))
+        # check the header
+        if header == ChatHeader.AUDIO:
+            eventloop = asyncio.new_event_loop()
+            asyncio.set_event_loop(eventloop)
+            # send the connection data
+            eventloop.run_until_complete(self.websocket.send(json.dumps(connection_data.to_json())))
+        else:
+            # send the connection data
+            eventloop.create_task(self.websocket.send(json.dumps(connection_data.to_json())))
 
     # disconnect the client from the host
     async def disconnect(self):
