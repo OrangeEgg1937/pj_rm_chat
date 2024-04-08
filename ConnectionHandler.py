@@ -1,7 +1,9 @@
 import sys
+import time
 import threading
 import asyncio
 import json
+import subprocess
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QListWidgetItem, QListWidget
 from PyQt5.QtCore import Qt, QThread
@@ -14,11 +16,12 @@ from qasync import QEventLoop
 
 
 class ConnectionHandler:
-    def __init__(self, mainWindow: QMainWindow, ui: Ui_MainWindow, client: ChatroomClient, event_loop: QEventLoop, host: ChatroomHost = None):
+    def __init__(self, mainWindow: QMainWindow, ui: Ui_MainWindow, client: ChatroomClient, event_loop: QEventLoop,
+                 host: ChatroomHost = None):
         # initialize all the necessary objects
         self.mainWindow = mainWindow
         self.ui = ui
-        self.connection_type = 0  # 0: no yet connect, 1: host, 2: client
+        self.connection_type = 0  # 0: no yet connect, 1: connected
         self.client = client
         self.host = host
         self.event_loop = event_loop
@@ -29,7 +32,7 @@ class ConnectionHandler:
         self.ui.connectToLocalhost.clicked.connect(lambda: self.__onConnectButtonClicked(1))
 
         self.ui.hostBtn.clicked.connect(self.__onHostButtonClicked)
-        self.ui.hostLocalhost.clicked.connect(lambda: self.__onHostButtonClicked(1))
+        self.ui.hostLocalhost.clicked.connect(lambda: self.__onHostButtonClicked("localhost"))
 
         self.ui.connect_to_chat.clicked.connect(self.__onConnectToChatButtonClicked)
 
@@ -46,34 +49,51 @@ class ConnectionHandler:
         else:
             threading.Thread(self.__search_host("ws://localhost:60000")).start()
 
-    def __onHostButtonClicked(self, method: int = 0):
-        # get the host ip
-        ip = self.ui.target_ip.text()
-        # get the port information
-        port = int(self.ui.chatroom_port.text())
+    # for late connection
+    async def __connection_late(self):
+        await asyncio.sleep(3)
+        self.connection_type = 2
+
+    def __onHostButtonClicked(self, ip_address: str = None):
+        # if the ip address is None, get the ip address from the input
+        if ip_address is None:
+            ip_address = self.ui.target_ip.text()
+
+        port = self.ui.chatroom_port.text()
+        chatroom_name = self.ui.chatroom_name.text()
 
         try:
             # disable other button and input information
             self.setConnectionPlaneEnabled(False)
             self.connection_type = 1
 
-            # check the user option type
-            if method == 0:
-                # create a host object
-                self.host = (ChatroomHost(ip, self.ui.chatroom_name.text(), port))
-                # copy the callback to the connection
-                self.__copy_callback_into_connection()
-                self.event_loop.create_task(self.__host_chatroom())
-            else:
-                # create a host object
-                self.host = (ChatroomHost("localhost", self.ui.chatroom_name.text(), port))
-                # copy the callback to the connection
-                self.__copy_callback_into_connection()
-                self.event_loop.create_task(self.__host_chatroom())
+            # run the host chatroom in a subprocess
+            subThread = QThread()
+            subThread.run = (lambda:
+                             subprocess.run(["python", "connection/host.py",
+                                             "-ip", ip_address,
+                                             "-name", chatroom_name,
+                                             "-port", f"{port}"],
+                                            check=True))
+            subThread.start()
+
+            self.event_loop.create_task(self.__connection_late())
+
+            self.ui.StatusMsg.setText("Please wait...")
+            self.ui.connectionMsg.setText(f"Connecting...")
+
+            while self.connection_type == 0:
+                pass
+
+            # connect to the host
+            destination = f"{ip_address}:{port}"
+            self.__connect_to_host(destination, chatroom_name)
+
         except Exception as e:
             print(f"Error: {e}")
             self.ui.StatusMsg.setText("See console for more information")
             self.ui.connectionMsg.setText(f"Failed")
+            self.connection_type = 0
 
     def __onConnectToChatButtonClicked(self):
         # get the selected item from the list
@@ -84,35 +104,13 @@ class ConnectionHandler:
             return
 
         # print the selected item
-        print(f"Selected item-IP address: {selected_item["senderIP"]}")
-
-        # update the user information
-        self.client.username = self.ui.username.text()
+        print(f"Selected item-IP address: {selected_item['senderIP']}")
 
         # set destination
-        destination = selected_item["senderIP"]
-        # try to connect to the host
-        try:
-            # set the connection type
-            self.connection_type = 2
-            # copy the callback to the connection
-            self.__copy_callback_into_connection()
-            # init a connection to the host
-            self.thread = QThread()
-            self.thread.run = (lambda: self.client.connect_to_host(destination))
-            self.thread.start()
-            # disable the connection plane
-            self.setConnectionPlaneEnabled(False)
-            while self.client.connectionID is None:
-                print("Waiting for a ID")
-            # set the success message
-            self.ui.StatusMsg.setText(f"{selected_item["name"]}, Your ID:{self.client.connectionID}")
-            self.ui.connectionMsg.setText(f"Connected!")
-        except Exception as e:
-            # set the error message
-            self.ui.StatusMsg.setText("See console for more information")
-            self.ui.connectionMsg.setText(f"Failed")
-            print(f"Error: {e}")
+        destination = selected_item['senderIP']
+
+        # connect to the host
+        self.__connect_to_host(destination, selected_item['name'])
 
     # search the host
     def __search_host(self, destination: str):
@@ -126,67 +124,11 @@ class ConnectionHandler:
         self.ui.chatroom_list.clear()
         for host in self.client.hostList:
             # Create QListWidgetItem and set the name
-            item = QListWidgetItem(self.client.hostList[host]["name"])
+            item = QListWidgetItem(self.client.hostList[host]['name'])
             item.setData(Qt.UserRole, self.client.hostList[host])
 
             # Add the item to the list
             self.ui.chatroom_list.addItem(item)
-
-    async def __host_chatroom(self):
-        try:
-            # update the UI
-            self.ui.chatroom_list.clear()
-            self.ui.StatusMsg.setText("Hosting...")
-            self.ui.connectionMsg.setText(f"Waiting...")
-
-            # set the host info
-            self.host.host_info.name = self.ui.username.text()
-
-            # start the host
-            task = self.event_loop.create_task(self.host.start())
-
-            while not self.host.isHosted:
-                exception = task.done()
-                if exception:
-                    error = task.exception()
-                    raise Exception("Failed to host the chatroom")
-                print("Waiting for the host to start...")
-                await asyncio.sleep(1)
-
-            # set the success message
-            self.ui.StatusMsg.setText(f"You hosted at {self.host.host_name}")
-            self.ui.connectionMsg.setText(f"Connected")
-
-            # update the client object
-            self.client.host_ip = f"ws://{self.host.host_ip}:{self.host.port}"
-            self.client.username = self.ui.username.text()
-            self.client.connectionID = 0
-
-            # add the host to the chatroom list
-            item = QListWidgetItem(f"{self.client.username}_{self.client.connectionID}")
-            item.setData(Qt.UserRole, self.host)
-            self.ui.memberlist.addItem(item)
-
-            # set the connection type
-            self.connection_type = 1
-
-            # loop the event
-            while True:
-                exception = task.done()
-                if exception:
-                    error = task.exception()
-                    raise Exception("Failed during host the chatroom")
-                await asyncio.sleep(1)
-
-        except Exception as e:
-            # clean up the connection when it is failed
-            print(f"Error: {e}\nReason:{error}\nTips:Have you run the Chatroom server?")
-            self.ui.StatusMsg.setText("See console for more information")
-            self.ui.connectionMsg.setText(f"Failed/Disconnected")
-            # enable the connection plane
-            self.setConnectionPlaneEnabled(True)
-            # reset the connection information
-            self.connection_type = 0
 
     def setConnectionPlaneEnabled(self, available: bool):
         self.ui.username.setEnabled(available)
@@ -199,14 +141,6 @@ class ConnectionHandler:
         self.ui.connectToLocalhost.setEnabled(available)
         self.ui.connect_to_chat.setEnabled(available)
 
-    # define a public method for broadcasting message
-    def broadcast_message(self, message: str, header: ChatHeader):
-        # check the connection type
-        if self.connection_type != 1:
-            print("You are not the host")
-            return
-        self.event_loop.create_task(self.host.broadcast_message(message, header))
-
     # update the member list
     def update_member_list(self, data: ChatData):
         # update the UI
@@ -218,7 +152,7 @@ class ConnectionHandler:
         print(chat_member)
         for member in chat_member:
             print(member)
-            name = f"{chat_member[member]["name"]} ({chat_member[member]["client_id"]})"
+            name = f"{chat_member[member]['name']} ({chat_member[member]['client_id']})"
             # Create QListWidgetItem and set the name
             item = QListWidgetItem(name)
             item.setData(Qt.UserRole, chat_member[member])
@@ -226,9 +160,37 @@ class ConnectionHandler:
             # Add the item to the list
             self.ui.memberlist.addItem(item)
 
+    # connect to a host server
+    def __connect_to_host(self, destination: str, host_name: str = None):
+        # update the user information
+        self.client.username = self.ui.username.text()
+
+        # initial connect to the host
+        try:
+            # init a connection to the host
+            # copy the callback to the connection
+            self.__copy_callback_into_connection()
+            # init a connection to the host
+            self.thread = QThread()
+            self.thread.run = (lambda: self.client.connect_to_host(destination))
+            self.thread.start()
+            # disable the connection plane
+            self.setConnectionPlaneEnabled(False)
+            while self.client.connectionID is None:
+                pass
+            # set the success message
+            self.ui.StatusMsg.setText(f"In {host_name}, Your ID is {self.client.connectionID}")
+            self.ui.connectionMsg.setText(f"Connected!")
+            self.connection_type = 1
+        except Exception as e:
+            # set the error message
+            self.ui.StatusMsg.setText("See console for more information")
+            self.ui.connectionMsg.setText(f"Failed")
+            print(f"Error: {e}")
+
     # client disconnect
     def disconnect(self):
-        if self.connection_type == 1:
+        if self.connection_type == 0:
             return
         self.event_loop.create_task(self.client.disconnect())
 
@@ -250,19 +212,10 @@ class ConnectionHandler:
     def __copy_callback_into_connection(self):
         if self.__header_callback_pool is None:
             return
-        # check the connection type
-        if self.connection_type == 2:
-            for header in self.__header_callback_pool:
-                for callback in self.__header_callback_pool[header]:
-                    self.client.connect_header_callback(header, callback)
-        elif self.connection_type == 1:
-            for header in self.__header_callback_pool:
-                for callback in self.__header_callback_pool[header]:
-                    self.host.connect_header_callback(header, callback)
+        for header in self.__header_callback_pool:
+            for callback in self.__header_callback_pool[header]:
+                self.client.connect_header_callback(header, callback)
 
     # send the message to the server
     def send_data(self, data, header: ChatHeader):
-        if self.connection_type == 1:
-            self.broadcast_message(data, header)
-        elif self.connection_type == 2:
-            self.client.send_data(data, header, self.event_loop)
+        self.client.send_data(data, header, self.event_loop)

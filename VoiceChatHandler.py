@@ -5,6 +5,7 @@ import asyncio
 import numpy
 import zlib
 import sounddevice as sd
+import threading
 
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import Qt, QThread
@@ -41,7 +42,7 @@ class VoiceChatHandler:
     # define the voice transmit function
     def __voice_transmit(self, indata, frames, time, status):
         self._raw_audio_data += bytes(indata)
-        if len(self._raw_audio_data) > 1024:
+        if len(self._raw_audio_data) > 1024 * 1024:
             # compress the audio data
             compressed_data = zlib.compress(self._raw_audio_data)
             print(f"Compressed: {len(compressed_data)}")
@@ -69,11 +70,20 @@ class VoiceChatHandler:
             self._stream.start()
 
     # define the callback function for play the audio
-    def __play_audio(self, data: bytes):
+    def __play_audio(self, message: ChatData):
         # decompress the audio data
-        decompressed_data = zlib.decompress(data)
+        decompressed_data = zlib.decompress(message.data)
         print(f"Decompressed: {len(decompressed_data)}")
+        print(f"Decompressed: {decompressed_data}")
+        print(f"====================")
 
+        # convert the audio data to numpy array
+        decompressed_data = numpy.frombuffer(decompressed_data, dtype=numpy.int16)
+
+        # starting a new thread to play the audio
+        threading.Thread(target=self.__play_audio_thread, args=(decompressed_data,)).start()
+
+    def __play_audio_thread(self, audio_data: numpy.ndarray):
         # play the audio
-        sd.play(decompressed_data, samplerate=SAMPLE_RATE, blocking=True)
-
+        sd.play(audio_data, samplerate=SAMPLE_RATE, device=sd.default.device)
+        sd.wait()

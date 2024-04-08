@@ -1,11 +1,9 @@
 import asyncio
 import json
 import websockets
-import threading
 import argparse
 from connection.data_definition import ChatHeader, ChatData
 from websockets.server import serve
-
 
 class ChatClientInfo:
     def __init__(self, name, client_id, websocket):
@@ -21,19 +19,14 @@ class ChatClientInfo:
 
 
 class ChatroomHost:
-    def __init__(self, host_ip: str, host_name: str = "anonymous", port: int = 32800):
+    def __init__(self, host_ip: str, host_name: str, port: int = 32800):
         self.host_ip = host_ip
-        self.host_name = f"{host_name}_{port}"
-        self.host_info = ChatClientInfo(self.host_name, 0, None)
         self.port = port
         self.__connected_clients = set()
         self.public_list = dict()
-        self.currentID = 1
+        self.currentID = 0
         self.isHosted = False
-        self.__header_callback = None
-
-        # init the header callback
-        self.__init_header_callback()
+        self.host_name = host_name
 
     async def __connection_handler(self, websocket, path):
         # when there is a connection, hold it
@@ -66,7 +59,7 @@ class ChatroomHost:
                 elif data.header == ChatHeader.AUDIO:
                     print(f"[Host - Audio] Received an audio from {data.name}")
                     # broadcast the message to all clients
-                    print(f"Audio data: {data.data}")
+                    await self.broadcast_message(data.data, ChatHeader.AUDIO, websocket)
 
             except websockets.exceptions.ConnectionClosedOK:
                 print(f"[Host - OnClose] Connection closed: {websocket}")
@@ -97,10 +90,6 @@ class ChatroomHost:
         data = ChatData(data=message, header=header, senderIP=self.host_ip, name=self.host_name)
         message = json.dumps(data.to_json())
 
-        # thread callback the header
-        callback_threading = threading.Thread(target=self.__process_header_callback, args=(header, data))
-        callback_threading.start()
-
         # copy the list
         receiver_list = self.__connected_clients.copy()
 
@@ -116,7 +105,7 @@ class ChatroomHost:
             print(f"One Client is disconnected")
 
     async def start(self):
-        print(f"Host: {self.host_name} is starting...")
+        print(f"Host name {self.host_name} ({self.host_ip}:{self.port}) is starting...")
         try:
             # init a host information to Chatroom server
             async with websockets.connect(f"ws://{self.host_ip}:60000") as websocket:
@@ -134,50 +123,24 @@ class ChatroomHost:
 
                 self.isHosted = True
 
-                # adding itself into the host list
-                self.public_list[0] = self.host_info
-
                 async with serve(self.__connection_handler, self.host_ip, self.port):
                     await asyncio.Future()  # run forever
         except Exception as e:
             self.isHosted = False
             raise Exception(f"{e}\nPlease see the error message above.")
 
-    # define the host header_callback variable
-    def __init_header_callback(self):
-        self.__header_callback = dict()
-        for headerType in ChatHeader:
-            self.__header_callback[headerType] = []
-
-    # add a callback to the header
-    def connect_header_callback(self, header: ChatHeader, callback):
-        if self.__header_callback is None:
-            self.__init_header_callback()
-        if header not in self.__header_callback:
-            raise ValueError(f"Header {header} is not in the header list")
-        self.__header_callback[header].append(callback)
-
-    # remove a callback from the header
-    def disconnect_header_callback(self, header: ChatHeader, callback):
-        if self.__header_callback is None:
-            self.__init_header_callback()
-        if header not in self.__header_callback:
-            raise ValueError(f"Header {header} is not in the header list")
-        self.__header_callback[header].remove(callback)
-
-    # process the header callback
-    def __process_header_callback(self, header: ChatHeader, data):
-        if header not in self.__header_callback:
-            print(f"[NOP] Header {header} is not in the header list")
-            return
-        print(f"Processing header callback function: {header}")
-        for callback in self.__header_callback[header]:
-            callback(data)
-
 
 # for script debug
 if __name__ == "__main__":
-    chatroom = ChatroomHost("localhost")
+    # check the argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-ip", "--host_ip", help="The host IP address", default="localhost")
+    parser.add_argument("-port", "--host_port", help="The host port", default=60000)
+    parser.add_argument("-name", "--host_name", help="The host name", default="Host")
+
+    args = parser.parse_args()
+
+    chatroom = ChatroomHost(args.host_ip, args.host_name, args.host_port)
 
     # start the chatroom
     asyncio.run(chatroom.start())

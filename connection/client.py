@@ -146,6 +146,7 @@ class ChatroomClient:
             eventloop = asyncio.new_event_loop()
             asyncio.set_event_loop(eventloop)
             # send the connection data
+            print("[Client] Sending the audio data")
             eventloop.run_until_complete(self.websocket.send(json.dumps(connection_data.to_json())))
         else:
             # send the connection data

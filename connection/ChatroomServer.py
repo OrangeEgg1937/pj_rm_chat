@@ -69,7 +69,7 @@ class ChatroomServer:
             print(f"Chatroom server is running on ws://{self.host_ip}:{self.port}")
             asyncio.get_event_loop().run_forever()
         except Exception as e:
-            print(f"Error: {e}\n The IP address or port is already in use. Please try another one.")
+            print(f"Error: {e}\nThe IP address or port is already in use/hns problem. Please try another one or reset hns in Windows PowerShell.")
 
 
 if __name__ == "__main__":
