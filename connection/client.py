@@ -51,9 +51,7 @@ class ChatroomClient:
     # process the header callback
     def __process_header_callback(self, header: ChatHeader, data):
         if header not in self.__header_callback:
-            print(f"[NOP] Header {header} is not in the header list")
             return
-        print(f"Processing header callback function: {header}")
         for callback in self.__header_callback[header]:
             callback(data)
 
@@ -81,13 +79,13 @@ class ChatroomClient:
         self.destination = destination
 
         # start the listener
-        asyncio.run(self.__listener())
+        self.__listener()
 
     # listen to the host incoming message
-    async def __listener(self):
+    def __listener(self):
         # starting a connection to the host
         try:
-            async with websockets.connect(f"ws://{self.destination}") as ws:
+            with connect(f"ws://{self.destination}") as ws:
                 self.websocket = ws
                 while True:
                     if (self.__isConnected is False) and (self.connectionID is None):
@@ -98,21 +96,19 @@ class ChatroomClient:
                                                    name=self.username)
                         sending_data = json.dumps(connection_data.to_json())
                         # send the connection ID to the host
-                        await ws.send(sending_data)
+                        ws.send(sending_data)
 
                     # receive the message
-                    message = await ws.recv()
+                    message = ws.recv()
 
                     # initial connection checking
                     if self.__isConnected is False:
                         if message.isdigit():
                             self.__isConnected = True
                             self.connectionID = int(message)
-                            print(f"Connection ID: {self.connectionID}")
                             continue
 
                     package = ChatData.from_json(message)
-                    print(f"Received a message from {package.senderIP}: {package.data}")
 
                     # process the header callback
                     self.__process_header_callback(package.header, package)
@@ -122,7 +118,7 @@ class ChatroomClient:
         except websockets.exceptions.ConnectionClosedError:
             print(f"Connection closed incorrectly: {self.destination}")
         # clean up the connection
-        await self.websocket.close()
+        self.websocket.close()
         self.__isConnected = False
         self.connectionID = None
         self.buffer = None
@@ -130,27 +126,29 @@ class ChatroomClient:
         self.websocket = None
 
     # general data transfer to the host, if there is a data received, it will be stored in the buffer
-    def send_data(self, data: str, header: ChatHeader, eventloop = None):
+    def send_data(self, data: str, header: ChatHeader):
         # create a connection data
         connection_data = ChatData(data=data,
                                    header=header,
                                    senderIP=self.host_ip,
                                    name=self.username)
 
-        # check the event loop
-        if eventloop is None:
-            eventloop = asyncio.get_event_loop()
+        eventloop = asyncio.new_event_loop()
+        asyncio.set_event_loop(eventloop)
 
         # check the header
-        if header == ChatHeader.AUDIO:
-            eventloop = asyncio.new_event_loop()
-            asyncio.set_event_loop(eventloop)
-            # send the connection data
-            print("[Client] Sending the audio data")
-            eventloop.run_until_complete(self.websocket.send(json.dumps(connection_data.to_json())))
-        else:
-            # send the connection data
-            eventloop.create_task(self.websocket.send(json.dumps(connection_data.to_json())))
+        try:
+            if header == ChatHeader.AUDIO:
+                # eventloop = asyncio.new_event_loop()
+                # asyncio.set_event_loop(eventloop)
+                # send the connection data
+                print("[Client] Sending the audio data")
+                eventloop.run_until_complete(self.websocket.send(json.dumps(connection_data.to_json())))
+            else:
+                # send the connection data
+                eventloop.run_until_complete(self.websocket.send(json.dumps(connection_data.to_json())))
+        finally:
+            eventloop.close()
 
     # disconnect the client from the host
     async def disconnect(self):

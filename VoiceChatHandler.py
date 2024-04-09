@@ -1,8 +1,9 @@
 import io
 import sys
+import queue
 import json
 import asyncio
-import numpy
+import numpy as np
 import zlib
 import sounddevice as sd
 import threading
@@ -29,29 +30,56 @@ class VoiceChatHandler:
         self.ui = ui
         self.connectionHandler = connectionHandler
         self.isSpeaking = False
+        self.current_pkg = 0
+        self.audioBuffer = queue.Queue()
 
         self._raw_audio_data = None
-        self._stream = sd.RawInputStream(channels=1, callback=self.__voice_transmit, dtype='int16')
 
         # register the signal
         self.ui.push_to_talk.clicked.connect(self.__start_speaking)
 
         # add the header callback
-        self.connectionHandler.connect_header_callback(ChatHeader.AUDIO, self.__play_audio)
+        self.connectionHandler.connect_header_callback(ChatHeader.AUDIO, self.__audio_data_in)
+
+        # start the output audio thread
+        self._audioOut_thread = QThread()
+        self._audioOut_thread.run = self.__play_audio_thread
+        self._audioOut_thread.start()
+
+        # start the input audio thread
+        self._userSpeakThread = QThread()
+        self._userSpeakThread.run = self.__voice_transmit
 
     # define the voice transmit function
-    def __voice_transmit(self, indata, frames, time, status):
-        self._raw_audio_data += bytes(indata)
-        if len(self._raw_audio_data) > 1024 * 1024:
-            # compress the audio data
-            compressed_data = zlib.compress(self._raw_audio_data)
-            print(f"Compressed: {len(compressed_data)}")
+    def __voice_transmit(self):
+        self._stream = sd.RawInputStream(channels=1, dtype='int16', samplerate=SAMPLE_RATE, callback=None)
+        self._stream.start()
+        while True:
+            if self.isSpeaking:
+                # get the audio buffer
+                buffer, overflow = self._stream.read(1024*16)
+                raw_audio_data = buffer[:]
 
-            # transmit the audio data
-            self.connectionHandler.send_data(compressed_data, ChatHeader.AUDIO)
+                if raw_audio_data is None:
+                    continue
 
-            # reset the raw audio data buffer
-            self._raw_audio_data = b''
+                self.current_pkg += 1
+
+                # compress the audio data
+                compressed_data = zlib.compress(raw_audio_data)
+
+                # build the data package
+                message = ChatData(data=compressed_data,
+                                   header=ChatHeader.AUDIO,
+                                   senderIP=f"{self.current_pkg}",
+                                   name=self.connectionHandler.client.username)
+
+                # send the audio data to the server
+                self.connectionHandler.client.websocket.send(json.dumps(message.to_json()))
+
+            else:
+                self._stream.stop()
+                break
 
     # define the start speaking function
     def __start_speaking(self):
@@ -62,28 +90,29 @@ class VoiceChatHandler:
         if self.isSpeaking:
             self.ui.tipsMessage.setText("Push to talk")
             self.isSpeaking = False
-            self._stream.stop()
         else:
             self.ui.tipsMessage.setText("Now speaking...")
             self.isSpeaking = True
             self._raw_audio_data = b''
-            self._stream.start()
+            self._userSpeakThread.start()
 
     # define the callback function for play the audio
-    def __play_audio(self, message: ChatData):
+    def __audio_data_in(self, message: ChatData):
         # decompress the audio data
         decompressed_data = zlib.decompress(message.data)
-        print(f"Decompressed: {len(decompressed_data)}")
-        print(f"Decompressed: {decompressed_data}")
-        print(f"====================")
 
         # convert the audio data to numpy array
-        decompressed_data = numpy.frombuffer(decompressed_data, dtype=numpy.int16)
+        decompressed_data = np.frombuffer(decompressed_data, dtype=np.int16)
 
-        # starting a new thread to play the audio
-        threading.Thread(target=self.__play_audio_thread, args=(decompressed_data,)).start()
+        # adding the decompressed data to the audio buffer
+        self.audioBuffer.put(decompressed_data)
 
-    def __play_audio_thread(self, audio_data: numpy.ndarray):
-        # play the audio
-        sd.play(audio_data, samplerate=SAMPLE_RATE, device=sd.default.device)
-        sd.wait()
+    def __play_audio_thread(self):
+        _audioOut = sd.OutputStream(channels=1, dtype='int16', samplerate=SAMPLE_RATE, callback=None)
+        _audioOut.start()
+        while True:
+            if not self.audioBuffer.empty():
+                audio_data = self.audioBuffer.get()
+                _audioOut.write(audio_data)
+            else:
+                continue

@@ -57,7 +57,7 @@ class ChatroomHost:
                     self.currentID = self.currentID + 1
                     await self.broadcast_message(chatroom_list, ChatHeader.CHATROOM_LIST)
                 elif data.header == ChatHeader.AUDIO:
-                    print(f"[Host - Audio] Received an audio from {data.name}")
+                    print(f"[Host - Audio] Received an audio from {data.name}, {data.senderIP}")
                     # broadcast the message to all clients
                     await self.broadcast_message(data.data, ChatHeader.AUDIO, websocket)
 
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     # check the argument
     parser = argparse.ArgumentParser()
     parser.add_argument("-ip", "--host_ip", help="The host IP address", default="localhost")
-    parser.add_argument("-port", "--host_port", help="The host port", default=60000)
+    parser.add_argument("-port", "--host_port", help="The host port", default=32801)
     parser.add_argument("-name", "--host_name", help="The host name", default="Host")
 
     args = parser.parse_args()

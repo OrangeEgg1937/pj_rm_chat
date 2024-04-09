@@ -16,15 +16,17 @@ from qasync import QEventLoop
 
 
 class ConnectionHandler:
-    def __init__(self, mainWindow: QMainWindow, ui: Ui_MainWindow, client: ChatroomClient, event_loop: QEventLoop,
+    def __init__(self, app: QApplication, mainWindow: QMainWindow, ui: Ui_MainWindow, client: ChatroomClient, event_loop: QEventLoop,
                  host: ChatroomHost = None):
         # initialize all the necessary objects
+        self.app = app
         self.mainWindow = mainWindow
         self.ui = ui
         self.connection_type = 0  # 0: no yet connect, 1: connected
         self.client = client
         self.host = host
         self.event_loop = event_loop
+        self.host_thread = None
         self.__header_callback_pool = None
 
         # register the signal
@@ -52,7 +54,7 @@ class ConnectionHandler:
     # for late connection
     async def __connection_late(self):
         await asyncio.sleep(3)
-        self.connection_type = 2
+        self.connection_type = 1
 
     def __onHostButtonClicked(self, ip_address: str = None):
         # if the ip address is None, get the ip address from the input
@@ -68,14 +70,14 @@ class ConnectionHandler:
             self.connection_type = 1
 
             # run the host chatroom in a subprocess
-            subThread = QThread()
-            subThread.run = (lambda:
-                             subprocess.run(["python", "connection/host.py",
-                                             "-ip", ip_address,
-                                             "-name", chatroom_name,
-                                             "-port", f"{port}"],
-                                            check=True))
-            subThread.start()
+            self.host_thread = QThread()
+            self.host_thread.run = (lambda:
+                                    subprocess.run(["python", "connection/host.py",
+                                                    "-ip", ip_address,
+                                                    "-name", chatroom_name,
+                                                    "-port", f"{port}"],
+                                                   check=True))
+            self.host_thread.start()
 
             self.event_loop.create_task(self.__connection_late())
 
@@ -88,6 +90,11 @@ class ConnectionHandler:
             # connect to the host
             destination = f"{ip_address}:{port}"
             self.__connect_to_host(destination, chatroom_name)
+
+            # register app quit event to the host_thread
+            self.app.aboutToQuit.connect(lambda:
+                                         self.host_thread.terminate()
+                                         if self.host_thread.is_alive() else None)
 
         except Exception as e:
             print(f"Error: {e}")
@@ -217,5 +224,7 @@ class ConnectionHandler:
                 self.client.connect_header_callback(header, callback)
 
     # send the message to the server
-    def send_data(self, data, header: ChatHeader):
-        self.client.send_data(data, header, self.event_loop)
+    def send_data(self, data, header: ChatHeader, event_loop: QEventLoop = None):
+        if event_loop is None:
+            event_loop = self.event_loop
+        self.client.send_data(data, header, event_loop)

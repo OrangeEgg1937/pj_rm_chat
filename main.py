@@ -40,7 +40,7 @@ if __name__ == "__main__":
     """
 
     # import the UI logic related class (Please add the function here)
-    connectionHandler = ConnectionHandler(mainWindow=mainWindow, ui=ui, client=client, event_loop=event_loop)
+    connectionHandler = ConnectionHandler(app=app, mainWindow=mainWindow, ui=ui, client=client, event_loop=event_loop)
     TextMessageHandler = TextMessageHandler(mainWindow, ui, connectionHandler)
     voceChatHandler = VoiceChatHandler(mainWindow, ui, connectionHandler)
 
