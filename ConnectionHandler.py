@@ -224,7 +224,5 @@ class ConnectionHandler:
                 self.client.connect_header_callback(header, callback)
 
     # send the message to the server
-    def send_data(self, data, header: ChatHeader, event_loop: QEventLoop = None):
-        if event_loop is None:
-            event_loop = self.event_loop
-        self.client.send_data(data, header, event_loop)
+    def send_data(self, data, header: ChatHeader):
+        self.client.send_data(data, header)

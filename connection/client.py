@@ -2,6 +2,8 @@ import asyncio
 import json
 import socket
 import websockets
+import queue
+import threading
 from connection.data_definition import ChatHeader, ChatData
 from websockets.sync.client import connect
 
@@ -20,8 +22,9 @@ class ChatroomClient:
                                      senderIP=self.host_ip,
                                      name=self.username)
         self.connectionID = None
-        self.buffer = None
+        self.buffer = queue.Queue()
         self.__header_callback = None
+        self.send_thread = None
 
         # init the header callback
         self.__init_header_callback()
@@ -81,6 +84,16 @@ class ChatroomClient:
         # start the listener
         self.__listener()
 
+    # a thread for sending data to the host
+    def __send_data_thread(self):
+        while True:
+            if self.__isConnected is False:
+                break
+            if self.buffer is not None:
+                data = self.buffer.get()
+                if data is not None:
+                    self.websocket.send(data)
+
     # listen to the host incoming message
     def __listener(self):
         # starting a connection to the host
@@ -101,11 +114,17 @@ class ChatroomClient:
                     # receive the message
                     message = ws.recv()
 
+                    if message is None:
+                        continue
+
                     # initial connection checking
                     if self.__isConnected is False:
                         if message.isdigit():
                             self.__isConnected = True
                             self.connectionID = int(message)
+                            # starting the sending data thread
+                            self.send_thread = threading.Thread(target=self.__send_data_thread)
+                            self.send_thread.start()
                             continue
 
                     package = ChatData.from_json(message)
@@ -124,6 +143,8 @@ class ChatroomClient:
         self.buffer = None
         print(f"Client disconnected from {self.destination}")
         self.websocket = None
+        # clean the thread
+        self.send_thread = None
 
     # general data transfer to the host, if there is a data received, it will be stored in the buffer
     def send_data(self, data: str, header: ChatHeader):
@@ -133,22 +154,8 @@ class ChatroomClient:
                                    senderIP=self.host_ip,
                                    name=self.username)
 
-        eventloop = asyncio.new_event_loop()
-        asyncio.set_event_loop(eventloop)
-
-        # check the header
-        try:
-            if header == ChatHeader.AUDIO:
-                # eventloop = asyncio.new_event_loop()
-                # asyncio.set_event_loop(eventloop)
-                # send the connection data
-                print("[Client] Sending the audio data")
-                eventloop.run_until_complete(self.websocket.send(json.dumps(connection_data.to_json())))
-            else:
-                # send the connection data
-                eventloop.run_until_complete(self.websocket.send(json.dumps(connection_data.to_json())))
-        finally:
-            eventloop.close()
+        # put the data into the buffer
+        self.buffer.put(json.dumps(connection_data.to_json()))
 
     # disconnect the client from the host
     async def disconnect(self):

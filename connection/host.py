@@ -5,6 +5,8 @@ import argparse
 from connection.data_definition import ChatHeader, ChatData
 from websockets.server import serve
 
+CHATROOM_SERVER_ADDR = "43.198.17.189"
+
 class ChatClientInfo:
     def __init__(self, name, client_id, websocket):
         self.name = name
@@ -19,7 +21,7 @@ class ChatClientInfo:
 
 
 class ChatroomHost:
-    def __init__(self, host_ip: str, host_name: str, port: int = 32800):
+    def __init__(self, host_ip: str, host_name: str, port: int = 32800, local_address="localhost", chatroom_server_ip="localhost"):
         self.host_ip = host_ip
         self.port = port
         self.__connected_clients = set()
@@ -27,6 +29,8 @@ class ChatroomHost:
         self.currentID = 0
         self.isHosted = False
         self.host_name = host_name
+        self.local_address = local_address
+        self.chatroom_server_ip = chatroom_server_ip
 
     async def __connection_handler(self, websocket, path):
         # when there is a connection, hold it
@@ -108,7 +112,7 @@ class ChatroomHost:
         print(f"Host name {self.host_name} ({self.host_ip}:{self.port}) is starting...")
         try:
             # init a host information to Chatroom server
-            async with websockets.connect(f"ws://{self.host_ip}:60000") as websocket:
+            async with websockets.connect(f"ws://{self.chatroom_server_ip}:60000") as websocket:
                 data = ChatData(data=json.dumps(self.host_name),
                                 header=ChatHeader.REGISTER_HOST,
                                 senderIP=f"{self.host_ip}:{self.port}",
@@ -123,7 +127,7 @@ class ChatroomHost:
 
                 self.isHosted = True
 
-                async with serve(self.__connection_handler, self.host_ip, self.port):
+                async with serve(self.__connection_handler, self.local_address, self.port):
                     await asyncio.Future()  # run forever
         except Exception as e:
             self.isHosted = False
@@ -134,13 +138,15 @@ class ChatroomHost:
 if __name__ == "__main__":
     # check the argument
     parser = argparse.ArgumentParser()
-    parser.add_argument("-ip", "--host_ip", help="The host IP address", default="localhost")
-    parser.add_argument("-port", "--host_port", help="The host port", default=32801)
+    parser.add_argument("-ip", "--host_ip", help="The host IP address", default="43.198.17.189")
+    parser.add_argument("-port", "--host_port", help="The host port", default=32800)
     parser.add_argument("-name", "--host_name", help="The host name", default="Host")
+    parser.add_argument("-local", "--host_local", help="The host local address", default="172.31.13.35")
+    parser.add_argument("-c", "--cserver_ip", help="The host local address", default="43.198.17.189")
 
     args = parser.parse_args()
 
-    chatroom = ChatroomHost(args.host_ip, args.host_name, args.host_port)
+    chatroom = ChatroomHost(args.host_ip, args.host_name, args.host_port, args.host_local, args.cserver_ip)
 
     # start the chatroom
     asyncio.run(chatroom.start())

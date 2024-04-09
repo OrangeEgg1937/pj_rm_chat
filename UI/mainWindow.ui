@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>910</width>
-    <height>821</height>
+    <width>935</width>
+    <height>903</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -23,6 +23,12 @@
    <layout class="QGridLayout" name="gridLayout">
     <item row="1" column="0">
      <widget class="QFrame" name="verticalFrame">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="styleSheet">
        <string notr="true">QFrame{
      border: 1px solid rgb(0, 0, 0)
@@ -74,14 +80,14 @@
        <item>
         <widget class="QLabel" name="NameTag">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
          <property name="minimumSize">
           <size>
-           <width>0</width>
+           <width>130</width>
            <height>0</height>
           </size>
          </property>
@@ -96,7 +102,7 @@
        <item>
         <widget class="QLineEdit" name="username">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -121,14 +127,14 @@
        <item>
         <widget class="QLabel" name="IPTag">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
          <property name="minimumSize">
           <size>
-           <width>0</width>
+           <width>130</width>
            <height>0</height>
           </size>
          </property>
@@ -142,14 +148,14 @@
           <string notr="true">Border:none</string>
          </property>
          <property name="text">
-          <string>IP</string>
+          <string>Chatroom Server Address</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLineEdit" name="target_ip">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -174,14 +180,14 @@
        <item>
         <widget class="QLabel" name="IPTag_2">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
          <property name="minimumSize">
           <size>
-           <width>0</width>
+           <width>130</width>
            <height>0</height>
           </size>
          </property>
@@ -189,14 +195,14 @@
           <string notr="true">Border:none</string>
          </property>
          <property name="text">
-          <string>Chatroom name</string>
+          <string>Chatroom name*</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLineEdit" name="chatroom_name">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -221,7 +227,7 @@
        <item>
         <widget class="QLabel" name="label_8">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -242,7 +248,7 @@
           <string notr="true">Border:none</string>
          </property>
          <property name="text">
-          <string>Chatroom port</string>
+          <string>Chatroom port*</string>
          </property>
         </widget>
        </item>
@@ -272,9 +278,103 @@
         </widget>
        </item>
        <item>
+        <widget class="QLabel" name="label">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>130</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">Border:none</string>
+         </property>
+         <property name="text">
+          <string>Public IP address*</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="publicIP">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>130</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>130</width>
+           <height>16777215</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_9">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>130</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">Border:none</string>
+         </property>
+         <property name="text">
+          <string>Local IP address*</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEdit">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>130</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="hostBtn">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -286,14 +386,14 @@
           </size>
          </property>
          <property name="text">
-          <string>Host</string>
+          <string>Host*</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="hostLocalhost">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -305,14 +405,14 @@
           </size>
          </property>
          <property name="text">
-          <string>Host as localhost</string>
+          <string>Host as localhost*</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="connectBtn">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -331,7 +431,7 @@
        <item>
         <widget class="QPushButton" name="connectToLocalhost">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -350,7 +450,7 @@
        <item>
         <widget class="QLabel" name="label_4">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -372,14 +472,14 @@
        <item>
         <widget class="QListWidget" name="chatroom_list">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
          <property name="minimumSize">
           <size>
-           <width>0</width>
+           <width>130</width>
            <height>200</height>
           </size>
          </property>
@@ -394,10 +494,16 @@
        <item>
         <widget class="QPushButton" name="connect_to_chat">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>130</width>
+           <height>0</height>
+          </size>
          </property>
          <property name="maximumSize">
           <size>
@@ -714,7 +820,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>910</width>
+     <width>935</width>
      <height>26</height>
     </rect>
    </property>

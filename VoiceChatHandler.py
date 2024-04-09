@@ -44,7 +44,7 @@ class VoiceChatHandler:
         # start the output audio thread
         self._audioOut_thread = QThread()
         self._audioOut_thread.run = self.__play_audio_thread
-        self._audioOut_thread.start()
+        # self._audioOut_thread.start()
 
         # start the input audio thread
         self._userSpeakThread = QThread()
@@ -98,14 +98,15 @@ class VoiceChatHandler:
 
     # define the callback function for play the audio
     def __audio_data_in(self, message: ChatData):
-        # decompress the audio data
-        decompressed_data = zlib.decompress(message.data)
-
-        # convert the audio data to numpy array
-        decompressed_data = np.frombuffer(decompressed_data, dtype=np.int16)
+        pass
+        # # decompress the audio data
+        # decompressed_data = zlib.decompress(message.data)
+        #
+        # # convert the audio data to numpy array
+        # decompressed_data = np.frombuffer(decompressed_data, dtype=np.int16)
 
         # adding the decompressed data to the audio buffer
-        self.audioBuffer.put(decompressed_data)
+        # self.audioBuffer.put(decompressed_data)
 
     def __play_audio_thread(self):
         _audioOut = sd.OutputStream(channels=1, dtype='int16', samplerate=SAMPLE_RATE, callback=None)
