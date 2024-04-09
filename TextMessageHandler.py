@@ -8,7 +8,6 @@ from qasync import QEventLoop
 
 from UI.Ui_mainWindow import Ui_MainWindow
 from connection.host import ChatroomHost
-from connection.client import ChatroomClient
 from connection.data_definition import ChatHeader, ChatData
 from ConnectionHandler import ConnectionHandler
 

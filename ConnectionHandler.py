@@ -199,7 +199,8 @@ class ConnectionHandler:
         data = ChatData(data=data, header=header, senderIP=self.client.ip_address, name=self.client.name)
         message = json.dumps(data.to_json())
         print(f"[Client] Sending {data.header} message")
-        self.qtWebSocket.sendTextMessage(message)
+        sent = self.qtWebSocket.sendTextMessage(message)
+        print(f"[Client] Sent: {sent}")
 
     '''
         Following is the header callback implementation
