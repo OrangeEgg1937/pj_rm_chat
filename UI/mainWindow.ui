@@ -148,7 +148,7 @@
           <string notr="true">Border:none</string>
          </property>
          <property name="text">
-          <string>Chatroom Server Address</string>
+          <string>Chatroom Server IP</string>
          </property>
         </widget>
        </item>
@@ -173,7 +173,7 @@
           </size>
          </property>
          <property name="text">
-          <string>localhost</string>
+          <string>43.198.17.189</string>
          </property>
         </widget>
        </item>
@@ -319,6 +319,9 @@
            <height>16777215</height>
           </size>
          </property>
+         <property name="text">
+          <string>localhost</string>
+         </property>
         </widget>
        </item>
        <item>
@@ -368,6 +371,9 @@
            <width>100</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="text">
+          <string>localhost</string>
          </property>
         </widget>
        </item>

@@ -3,6 +3,7 @@ import json
 import asyncio
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import Qt, QThread
+from PyQt5.QtWebSockets import QWebSocket
 from qasync import QEventLoop
 
 from UI.Ui_mainWindow import Ui_MainWindow
@@ -36,11 +37,11 @@ class TextMessageHandler:
         self.ui.chat_input.clear()
 
         # check if the client is connected
-        if self.connectionHandler.connection_type == 0:
+        if self.connectionHandler.isConnected == 0:
             return
 
         # build the full message
-        message = f"{self.connectionHandler.client.username} ({self.connectionHandler.client.connectionID}): {message}"
+        message = f"{self.connectionHandler.client.name} ({self.connectionHandler.client.client_id}): {message}"
 
         # send the message to the server
         self.connectionHandler.send_data(message, ChatHeader.TEXT)

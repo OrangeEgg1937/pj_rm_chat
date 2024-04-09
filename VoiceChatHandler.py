@@ -10,11 +10,8 @@ import threading
 
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import Qt, QThread
-from qasync import QEventLoop
 
 from UI.Ui_mainWindow import Ui_MainWindow
-from connection.host import ChatroomHost
-from connection.client import ChatroomClient
 from connection.data_definition import ChatHeader, ChatData
 from ConnectionHandler import ConnectionHandler
 
@@ -63,19 +60,11 @@ class VoiceChatHandler:
                 if raw_audio_data is None:
                     continue
 
-                self.current_pkg += 1
-
                 # compress the audio data
                 compressed_data = zlib.compress(raw_audio_data)
 
-                # build the data package
-                message = ChatData(data=compressed_data,
-                                   header=ChatHeader.AUDIO,
-                                   senderIP=f"{self.current_pkg}",
-                                   name=self.connectionHandler.client.username)
-
                 # send the audio data to the server
-                self.connectionHandler.client.websocket.send(json.dumps(message.to_json()))
+                self.connectionHandler.send_data(compressed_data, ChatHeader.AUDIO)
 
             else:
                 self._stream.stop()
@@ -84,7 +73,7 @@ class VoiceChatHandler:
     # define the start speaking function
     def __start_speaking(self):
         # if user is not connected, then return
-        if self.connectionHandler.connection_type == 0:
+        if self.connectionHandler.isConnected == 0:
             return
 
         if self.isSpeaking:

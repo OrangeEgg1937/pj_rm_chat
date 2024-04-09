@@ -25,9 +25,6 @@ if __name__ == "__main__":
     # define the ui
     ui.setupUi(mainWindow)  # set up the UI
 
-    # define the cline side object
-    client = client.ChatroomClient("localhost", port=60000)
-
     """
     Adding your function below this line
     
@@ -40,9 +37,9 @@ if __name__ == "__main__":
     """
 
     # import the UI logic related class (Please add the function here)
-    connectionHandler = ConnectionHandler(app=app, mainWindow=mainWindow, ui=ui, client=client, event_loop=event_loop)
+    connectionHandler = ConnectionHandler(app=app, mainWindow=mainWindow, ui=ui, event_loop=event_loop)
     TextMessageHandler = TextMessageHandler(mainWindow, ui, connectionHandler)
-    voceChatHandler = VoiceChatHandler(mainWindow, ui, connectionHandler)
+    voiceChatHandler = VoiceChatHandler(mainWindow, ui, connectionHandler)
 
     """
     Do not modify the code below

@@ -1,33 +1,83 @@
 import sys
 import time
-import threading
-import asyncio
 import json
 import subprocess
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QListWidgetItem, QListWidget
-from PyQt5.QtCore import Qt, QThread
+from PyQt5.QtCore import Qt, QThread, QUrl, QObject
+from PyQt5.QtWebSockets import QWebSocket
+from qasync import QEventLoop
 
 from UI.Ui_mainWindow import Ui_MainWindow
 from connection.host import ChatroomHost
-from connection.client import ChatroomClient
 from connection.data_definition import ChatHeader, ChatData
-from qasync import QEventLoop
+
+
+class ClientInfo:
+    def __init__(self, client_id: str, name: str):
+        self.client_id = client_id
+        self.name = name
+        self.ip_address = "localhost"
+        self.public_ip = "0.0.0.0"
 
 
 class ConnectionHandler:
-    def __init__(self, app: QApplication, mainWindow: QMainWindow, ui: Ui_MainWindow, client: ChatroomClient, event_loop: QEventLoop,
+    def __init__(self, app: QApplication, mainWindow: QMainWindow, ui: Ui_MainWindow,
+                 event_loop: QEventLoop,
                  host: ChatroomHost = None):
         # initialize all the necessary objects
         self.app = app
         self.mainWindow = mainWindow
         self.ui = ui
-        self.connection_type = 0  # 0: no yet connect, 1: connected
-        self.client = client
-        self.host = host
+        self.isConnected = 0  # 0: no yet connect, 1: connected
         self.event_loop = event_loop
-        self.host_thread = None
+
+        # initialize the client info
+        self.client = ClientInfo("0", "anonymous")
+
+        # initialize the connection object
         self.__header_callback_pool = None
+
+        def __onConnected():
+            print("Connected to the chatroom server, initializing the client info to the server")
+            # update the client information
+            self.client.ip_address = self.qtWebSocket.peerAddress().toString()
+            self.client.name = self.ui.username.text()
+            # create a connection data
+            connection_data = ChatData(data=self.client.name,
+                                       header=ChatHeader.INIT_CONNECTION,
+                                       senderIP=self.client.ip_address,
+                                       name=self.client.name)
+            sending_data = json.dumps(connection_data.to_json())
+            # send the connection data to the server
+            self.qtWebSocket.sendTextMessage(sending_data)
+            self.isConnected = 1
+
+        def __onDisconnected():
+            # clean up the connection
+            print("Disconnected from the chatroom server")
+            self.setConnectionPlaneEnabled(True)
+            self.isConnected = 0
+
+        self.qtWebSocket = QWebSocket()
+        self.qtWebSocket.connected.connect(__onConnected)
+        self.qtWebSocket.disconnected.connect(__onDisconnected)
+        self.qtWebSocket.textMessageReceived.connect(self.__onHostDataReceived)
+
+        # host searching socket
+        self.__request_message = ChatData(data=self.client.name,
+                                          header=ChatHeader.REQUEST_HOST_LIST,
+                                          senderIP=self.client.ip_address,
+                                          name=self.client.name)
+        self.__search_socket = QWebSocket()
+
+        def __onRequestServerReady():
+            print("[Client] Requesting host list...")
+            self.__search_socket.sendTextMessage(json.dumps(self.__request_message.to_json()))
+
+        self.__search_socket.connected.connect(__onRequestServerReady)
+        self.__search_socket.disconnected.connect(lambda: print("Disconnected from the search server"))
+        self.__search_socket.textMessageReceived.connect(self.__onReceivedHostList)
 
         # register the signal
         self.ui.connectBtn.clicked.connect(self.__onConnectButtonClicked)
@@ -38,104 +88,81 @@ class ConnectionHandler:
 
         self.ui.connect_to_chat.clicked.connect(self.__onConnectToChatButtonClicked)
 
-        self.ui.disconnect_btn.clicked.connect(self.disconnect)
+        # self.ui.disconnect_btn.clicked.connect(self.disconnect)
 
-        # init the header_callback_pool
+        # init the header callback
+        self.__header_callback = None
+        self.__init_header_callback()
+
+        # add the function to the header callback
         self.connect_header_callback(ChatHeader.CHATROOM_LIST, self.update_member_list)
 
     # connect button clicked
     def __onConnectButtonClicked(self, method: int = 0):
-        # check the user option type
+        # check the user option type, 0 means connect with the input IP address, 1 means connect to the localhost
         if method == 0:
-            threading.Thread(self.__search_host(f"ws://{self.ui.target_ip.text()}:60000")).start()
+            destination = f"ws://{self.ui.target_ip.text()}:60000"
         else:
-            threading.Thread(self.__search_host("ws://localhost:60000")).start()
+            destination = "ws://localhost:60000"
 
-    # for late connection
-    async def __connection_late(self):
-        await asyncio.sleep(3)
-        self.connection_type = 1
+        # connect to the host
+        self.__search_socket.open(QUrl(destination))
 
     def __onHostButtonClicked(self, ip_address: str = None):
-        # if the ip address is None, get the ip address from the input
-        if ip_address is None:
-            ip_address = self.ui.target_ip.text()
-
-        port = self.ui.chatroom_port.text()
-        chatroom_name = self.ui.chatroom_name.text()
-
-        try:
-            # disable other button and input information
-            self.setConnectionPlaneEnabled(False)
-            self.connection_type = 1
-
-            # run the host chatroom in a subprocess
-            self.host_thread = QThread()
-            self.host_thread.run = (lambda:
-                                    subprocess.run(["python", "connection/host.py",
-                                                    "-ip", ip_address,
-                                                    "-name", chatroom_name,
-                                                    "-port", f"{port}"],
-                                                   check=True))
-            self.host_thread.start()
-
-            self.event_loop.create_task(self.__connection_late())
-
-            self.ui.StatusMsg.setText("Please wait...")
-            self.ui.connectionMsg.setText(f"Connecting...")
-
-            while self.connection_type == 0:
-                pass
-
-            # connect to the host
-            destination = f"{ip_address}:{port}"
-            self.__connect_to_host(destination, chatroom_name)
-
-            # register app quit event to the host_thread
-            self.app.aboutToQuit.connect(lambda:
-                                         self.host_thread.terminate()
-                                         if self.host_thread.is_alive() else None)
-
-        except Exception as e:
-            print(f"Error: {e}")
-            self.ui.StatusMsg.setText("See console for more information")
-            self.ui.connectionMsg.setText(f"Failed")
-            self.connection_type = 0
+        print("[Not yet implemented]")
+        data = ChatData("Testing:Hello World", header=ChatHeader.TEXT, senderIP="localhost", name="Test")
+        message = json.dumps(data.to_json())
+        self.qtWebSocket.sendTextMessage(message)
 
     def __onConnectToChatButtonClicked(self):
         # get the selected item from the list
         selected_item = self.ui.chatroom_list.currentItem().data(Qt.UserRole)
 
         # if the selected item is None or unknown object, then return
-        if selected_item is None or not isinstance(selected_item, dict):
+        if selected_item is None:
             return
 
         # print the selected item
-        print(f"Selected item-IP address: {selected_item['senderIP']}")
-
-        # set destination
-        destination = selected_item['senderIP']
+        print(f"Selected item-IP address: {selected_item}")
 
         # connect to the host
-        self.__connect_to_host(destination, selected_item['name'])
+        self.qtWebSocket.open(QUrl(f"ws://{selected_item}"))
 
     # search the host
-    def __search_host(self, destination: str):
-        # update the client object
-        self.client.host_ip = destination
+    def __onReceivedHostList(self, message: str):
+        # get the host list
+        host_list = json.loads(json.loads(message)['data'])
 
-        # request the host list
-        self.client.request_host_list()
+        print(host_list)
 
         # update the UI
         self.ui.chatroom_list.clear()
-        for host in self.client.hostList:
+
+        for host in host_list:
+            print(host_list[host]['name'])
             # Create QListWidgetItem and set the name
-            item = QListWidgetItem(self.client.hostList[host]['name'])
-            item.setData(Qt.UserRole, self.client.hostList[host])
+            item = QListWidgetItem(host_list[host]['name'])
+            item.setData(Qt.UserRole, host_list[host]['senderIP'])
 
             # Add the item to the list
             self.ui.chatroom_list.addItem(item)
+
+        # close the connection
+        self.__search_socket.close()
+
+    def __onHostDataReceived(self, message: str):
+        # if the message is a digit/int, then it is the connection ID
+        if message.isdigit():
+            self.client.client_id = message
+            print(f"Connection ID: {message}")
+            return
+
+        # get the package data
+        data = ChatData.from_json(message)
+        print(f"[Client] Received a message from {data.name}")
+
+        # process the header callback
+        self.__process_header_callback(data.header, data)
 
     def setConnectionPlaneEnabled(self, available: bool):
         self.ui.username.setEnabled(available)
@@ -158,7 +185,6 @@ class ConnectionHandler:
         chat_member = json.loads(member_list)
         print(chat_member)
         for member in chat_member:
-            print(member)
             name = f"{chat_member[member]['name']} ({chat_member[member]['client_id']})"
             # Create QListWidgetItem and set the name
             item = QListWidgetItem(name)
@@ -167,62 +193,42 @@ class ConnectionHandler:
             # Add the item to the list
             self.ui.memberlist.addItem(item)
 
-    # connect to a host server
-    def __connect_to_host(self, destination: str, host_name: str = None):
-        # update the user information
-        self.client.username = self.ui.username.text()
-
-        # initial connect to the host
-        try:
-            # init a connection to the host
-            # copy the callback to the connection
-            self.__copy_callback_into_connection()
-            # init a connection to the host
-            self.thread = QThread()
-            self.thread.run = (lambda: self.client.connect_to_host(destination))
-            self.thread.start()
-            # disable the connection plane
-            self.setConnectionPlaneEnabled(False)
-            while self.client.connectionID is None:
-                pass
-            # set the success message
-            self.ui.StatusMsg.setText(f"In {host_name}, Your ID is {self.client.connectionID}")
-            self.ui.connectionMsg.setText(f"Connected!")
-            self.connection_type = 1
-        except Exception as e:
-            # set the error message
-            self.ui.StatusMsg.setText("See console for more information")
-            self.ui.connectionMsg.setText(f"Failed")
-            print(f"Error: {e}")
-
-    # client disconnect
-    def disconnect(self):
-        if self.connection_type == 0:
-            return
-        self.event_loop.create_task(self.client.disconnect())
-
-    # init the header callback pool
-    def __init_header_callback_pool(self):
-        self.__header_callback_pool = dict()
-        for header in ChatHeader:
-            self.__header_callback_pool[header] = []
-
-    # add the function to the header callback poll
-    def connect_header_callback(self, header: ChatHeader, callback):
-        if self.__header_callback_pool is None:
-            self.__init_header_callback_pool()
-        if header not in self.__header_callback_pool:
-            raise ValueError(f"Header {header} is not in the header list")
-        self.__header_callback_pool[header].append(callback)
-
-    # copy the pool to the header callback
-    def __copy_callback_into_connection(self):
-        if self.__header_callback_pool is None:
-            return
-        for header in self.__header_callback_pool:
-            for callback in self.__header_callback_pool[header]:
-                self.client.connect_header_callback(header, callback)
-
     # send the message to the server
     def send_data(self, data, header: ChatHeader):
-        self.client.send_data(data, header)
+        # build the message
+        data = ChatData(data=data, header=header, senderIP=self.client.ip_address, name=self.client.name)
+        message = json.dumps(data.to_json())
+        print(f"[Client] Sending {data.header} message")
+        self.qtWebSocket.sendTextMessage(message)
+
+    '''
+        Following is the header callback implementation
+    '''
+    # init the header_callback variable
+    def __init_header_callback(self):
+        self.__header_callback = dict()
+        for headerType in ChatHeader:
+            self.__header_callback[headerType] = []
+
+    # add a callback to the header
+    def connect_header_callback(self, header: ChatHeader, callback):
+        if self.__header_callback is None:
+            self.__init_header_callback()
+        if header not in self.__header_callback:
+            raise ValueError(f"Header {header} is not in the header list")
+        self.__header_callback[header].append(callback)
+
+    # remove a callback from the header
+    def disconnect_header_callback(self, header: ChatHeader, callback):
+        if self.__header_callback is None:
+            self.__init_header_callback()
+        if header not in self.__header_callback:
+            raise ValueError(f"Header {header} is not in the header list")
+        self.__header_callback[header].remove(callback)
+
+    # process the header callback
+    def __process_header_callback(self, header: ChatHeader, data):
+        if header not in self.__header_callback:
+            return
+        for callback in self.__header_callback[header]:
+            callback(data)

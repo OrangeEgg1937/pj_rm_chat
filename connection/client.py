@@ -92,6 +92,7 @@ class ChatroomClient:
             if self.buffer is not None:
                 data = self.buffer.get()
                 if data is not None:
+                    print(f"Get one data, sending out... (size of buffer: {self.buffer.qsize()})")
                     self.websocket.send(data)
 
     # listen to the host incoming message
