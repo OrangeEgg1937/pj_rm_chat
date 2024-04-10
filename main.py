@@ -8,7 +8,7 @@ from UI.Ui_mainWindow import Ui_MainWindow
 from ConnectionHandler import ConnectionHandler
 from TextMessageHandler import TextMessageHandler
 from VoiceChatHandler import VoiceChatHandler
-from connection import client
+from VoiceRecordHandler import VoiceRecordHandler
 from qasync import QEventLoop
 
 # main program
@@ -39,7 +39,8 @@ if __name__ == "__main__":
     # import the UI logic related class (Please add the function here)
     connectionHandler = ConnectionHandler(app=app, mainWindow=mainWindow, ui=ui, event_loop=event_loop)
     TextMessageHandler = TextMessageHandler(mainWindow, ui, connectionHandler)
-    voiceChatHandler = VoiceChatHandler(mainWindow, ui, connectionHandler)
+    VoiceRecordHandler = VoiceRecordHandler(mainWindow, ui, connectionHandler)
+    voiceChatHandler = VoiceChatHandler(mainWindow, ui, connectionHandler, VoiceRecordHandler)
 
     """
     Do not modify the code below

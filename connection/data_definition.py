@@ -13,6 +13,9 @@ class ChatHeader(Enum):
     REQUEST_HOST_LIST = 5
     REGISTER_HOST = 6
     CHATROOM_LIST = 7
+    RECORDING = 8
+    DONE_RECORDING = 9
+    RECORDING_FILE = 10
 
 
 # define the Chat data

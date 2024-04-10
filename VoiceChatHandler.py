@@ -19,6 +19,7 @@ from PyQt5.QtCore import Qt, QThread
 from UI.Ui_mainWindow import Ui_MainWindow
 from connection.data_definition import ChatHeader, ChatData
 from ConnectionHandler import ConnectionHandler
+from VoiceRecordHandler import VoiceRecordHandler
 
 # define the sample rate
 SAMPLE_RATE = 44100
@@ -49,7 +50,7 @@ class AudioPlayer:
 
 # define the Voice chat function class
 class VoiceChatHandler:
-    def __init__(self, mainWindow: QMainWindow, ui: Ui_MainWindow, connectionHandler: ConnectionHandler):
+    def __init__(self, mainWindow: QMainWindow, ui: Ui_MainWindow, connectionHandler: ConnectionHandler, voiceRecordHandler: VoiceRecordHandler):
         # initialize all the necessary objects
         self.mainWindow = mainWindow
         self.ui = ui
@@ -58,6 +59,7 @@ class VoiceChatHandler:
         self.current_pkg = 0
         self.single_audio_data = b''
         self.audioBuffer = queue.Queue()
+        self.recordHandler = voiceRecordHandler
 
         self._raw_audio_data = None
         self.changePitch = False
@@ -81,7 +83,9 @@ class VoiceChatHandler:
                                          callback=self.__voice_transmit)
 
         # start the audio player thread
-        self._audio_player = AudioPlayer(sample_rate=SAMPLE_RATE)
+        self._current_audio_player = 0
+        self._audio_player0 = AudioPlayer(sample_rate=SAMPLE_RATE)
+        self._audio_player1 = AudioPlayer(sample_rate=SAMPLE_RATE)
 
     # define the voice transmit function
     def __voice_transmit(self, indata, frames, time, status):
@@ -100,6 +104,9 @@ class VoiceChatHandler:
             print("Compressed size: ", len(compressed_data), "Current Time", currentDateAndTime)
             # send the audio data to the server
             self.connectionHandler.send_data(compressed_data, ChatHeader.AUDIO)
+            # if the user is recording, then pass the audio data to record handler for recording
+            if self.recordHandler.isRecording:
+                self.recordHandler.recording_buffer.append(temp)
             # clear the audio data
             self.single_audio_data = b''
             # flush the socket
@@ -132,7 +139,12 @@ class VoiceChatHandler:
         currentDateAndTime = datetime.now(pytz.utc)
         print("Received audio data at ", currentDateAndTime)
         # add the audio data to the buffer
-        self._audio_player.audioBuffer.put(audio)
+        if self._current_audio_player == 0:
+            self._audio_player0.audioBuffer.put(audio)
+            self._current_audio_player = 1
+        elif self._current_audio_player == 1:
+            self._audio_player1.audioBuffer.put(audio)
+            self._current_audio_player = 0
 
     # Toggles between pitch and no pitch change
     def __onTogglePitch(self):
