@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>935</width>
+    <width>1107</width>
     <height>903</height>
    </rect>
   </property>
@@ -581,6 +581,13 @@
          <widget class="QTextBrowser" name="chatbox"/>
         </item>
         <item>
+         <widget class="QCheckBox" name="ttsToggle">
+          <property name="text">
+           <string>Text to speech</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLineEdit" name="chat_input"/>
         </item>
        </layout>
@@ -754,7 +761,7 @@
          <string notr="true">background-color:rgb(255, 255, 255)</string>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="voice">
          <attribute name="title">
@@ -765,6 +772,66 @@
          <attribute name="title">
           <string>VC Change</string>
          </attribute>
+         <widget class="QCheckBox" name="pitchToggle">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>10</y>
+            <width>111</width>
+            <height>41</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Voice Changer</string>
+          </property>
+         </widget>
+         <widget class="QSlider" name="PitchSlider">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>50</y>
+            <width>22</width>
+            <height>271</height>
+           </rect>
+          </property>
+          <property name="tabletTracking">
+           <bool>false</bool>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::WheelFocus</enum>
+          </property>
+          <property name="minimum">
+           <number>-100</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="tracking">
+           <bool>true</bool>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="tickPosition">
+           <enum>QSlider::TicksBelow</enum>
+          </property>
+          <property name="tickInterval">
+           <number>50</number>
+          </property>
+         </widget>
+         <widget class="QLabel" name="pitchValue">
+          <property name="geometry">
+           <rect>
+            <x>50</x>
+            <y>170</y>
+            <width>55</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Pitch: 0</string>
+          </property>
+         </widget>
         </widget>
        </widget>
       </item>
@@ -826,7 +893,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>935</width>
+     <width>1107</width>
      <height>26</height>
     </rect>
    </property>
