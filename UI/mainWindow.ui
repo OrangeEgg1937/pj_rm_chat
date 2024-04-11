@@ -276,7 +276,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="publicIP">
+        <widget class="QLineEdit" name="public_ip">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -296,7 +296,7 @@
           </size>
          </property>
          <property name="text">
-          <string>localhost</string>
+          <string>43.198.17.189</string>
          </property>
         </widget>
        </item>
@@ -329,7 +329,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit">
+        <widget class="QLineEdit" name="local_ip">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -349,7 +349,7 @@
           </size>
          </property>
          <property name="text">
-          <string>localhost</string>
+          <string>172.31.13.35</string>
          </property>
         </widget>
        </item>
@@ -369,25 +369,6 @@
          </property>
          <property name="text">
           <string>Host*</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="hostLocalhost">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>130</width>
-           <height>18</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Host as localhost*</string>
          </property>
         </widget>
        </item>
@@ -1040,19 +1021,6 @@ QPushButton:pressed{
       </item>
      </layout>
     </item>
-    <item row="0" column="4">
-     <widget class="QPushButton" name="disconnect_btn">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="text">
-       <string>Disconnect</string>
-      </property>
-     </widget>
-    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -1061,7 +1029,7 @@ QPushButton:pressed{
      <x>0</x>
      <y>0</y>
      <width>910</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

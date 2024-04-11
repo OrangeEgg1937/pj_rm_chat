@@ -77,12 +77,18 @@ class ConnectionHandler:
         self.__search_socket.disconnected.connect(lambda: print("Disconnected from the search server"))
         self.__search_socket.textMessageReceived.connect(self.__onReceivedHostList)
 
+        # create chatroom socket
+        self.__create_chatroom_message = None
+        self.__create_chatroom_socket = QWebSocket()
+        self.__create_chatroom_socket.connected.connect(self.__onCreateChatroomServerConnected)
+        self.__create_chatroom_socket.disconnected.connect(self.__onCreateChatroomServerDisconnected)
+        self.__create_chatroom_socket.textMessageReceived.connect(self.__onCreateChatroomServerReceived)
+
         # register the signal
         self.ui.connectBtn.clicked.connect(self.__onConnectButtonClicked)
         self.ui.connectToLocalhost.clicked.connect(lambda: self.__onConnectButtonClicked(1))
 
         self.ui.hostBtn.clicked.connect(self.__onHostButtonClicked)
-        self.ui.hostLocalhost.clicked.connect(lambda: self.__onHostButtonClicked("localhost"))
 
         self.ui.connect_to_chat.clicked.connect(self.__onConnectToChatButtonClicked)
 
@@ -106,13 +112,50 @@ class ConnectionHandler:
         # connect to the host
         self.__search_socket.open(QUrl(destination))
 
-    def __onHostButtonClicked(self, ip_address: str = None):
-        print("[Not yet implemented]")
-        data = ChatData("Testing:Hello World", header=ChatHeader.TEXT, senderIP="localhost", name="Test")
-        message = json.dumps(data.to_json())
-        self.qtWebSocket.sendTextMessage(message)
+    def __onHostButtonClicked(self):
+        # get the IP address
+        ip_address = self.ui.target_ip.text()
+        # building a json message
+        message = {
+            "chatroom_name": self.ui.chatroom_name.text(),
+            "port": self.ui.chatroom_port.text(),
+            "chatroom_server_ip": self.ui.target_ip.text(),
+            "host_ip": self.ui.public_ip.text(),
+            "local_ip": self.ui.local_ip.text()
+        }
+        message = json.dumps(message)
+        # send a message to the chatroom server to create a chatroom
+        self.__create_chatroom_message = ChatData(data=message,
+                           header=ChatHeader.CLIENT_HOST_CHATROOM,
+                           senderIP=self.client.ip_address,
+                           name=self.client.name)
+
+        # connect to the chatroom server
+        self.__create_chatroom_socket.open(QUrl(f"ws://{ip_address}:60000"))
+
+    def __onCreateChatroomServerConnected(self):
+        # send the message to the chatroom server
+        self.__create_chatroom_socket.sendTextMessage(json.dumps(self.__create_chatroom_message.to_json()))
+
+    def __onCreateChatroomServerDisconnected(self):
+        pass
+
+    def __onCreateChatroomServerReceived(self, message: str):
+        # get the message
+        if message == "OK":
+            print("Chatroom created successfully")
+            self.ui.StatusMsg.setText("Chatroom created successfully")
+        else:
+            print("Chatroom creation failed")
+            self.ui.StatusMsg.setText("Chatroom created failed")
+
+    def __onHostOnLocalhostButtonClicked(self):
+        pass
+
 
     def __onConnectToChatButtonClicked(self):
+        if self.ui.chatroom_list.currentItem() is None:
+            return
         # get the selected item from the list
         selected_item = self.ui.chatroom_list.currentItem().data(Qt.UserRole)
 

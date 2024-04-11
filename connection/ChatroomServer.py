@@ -1,6 +1,7 @@
 import asyncio
 import websockets
 import json
+import subprocess
 from connection.data_definition import ChatHeader, ChatData
 
 IP_ADDRESS = "localhost"
@@ -30,6 +31,35 @@ class ChatroomServer:
                 send_data = json.dumps(data.to_json())
                 await websocket.send(send_data)
                 continue
+
+            # receive the client to host a chatroom
+            if received_data.header == ChatHeader.CLIENT_HOST_CHATROOM:
+                data = json.loads(received_data.data)
+                print(data)
+                # get the information from the received_data.data
+                chatroom_name = data["chatroom_name"]
+                host_ip = data["host_ip"]
+                local_ip = data["local_ip"]
+                host_port = data["port"]
+                chatroom_ip = data["chatroom_server_ip"]
+
+                # full address of the host
+                host_address = f"{host_ip}:{host_port}"
+
+                # check the host is in the set or not
+                if host_address in self.hostList:
+                    # send the host information to the client
+                    await websocket.send("NOT OK")
+                else:
+                    # send the host information to the client
+                    await websocket.send("OK")
+                    # start a new process to host the server
+                    subprocess.Popen(["python", "host.py",
+                                      '-ip',f'{local_ip}',
+                                      '-port', f'{host_port}',
+                                      '-name', f'{chatroom_name}',
+                                      '-local',f'{local_ip}',
+                                      '-c', f'{chatroom_ip}'])
 
             # register a chatroom host
             if received_data.header == ChatHeader.REGISTER_HOST:

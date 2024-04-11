@@ -45,8 +45,8 @@ class ChatroomHost:
         self.chatroom_server_ip = chatroom_server_ip
 
         # ONLY FOR AWS TESTING SERVER
-        self.dummy_client = ChatClientInfo("Repeater", 0, None)
-        self.public_list[0] = self.dummy_client
+        # self.dummy_client = ChatClientInfo("Repeater", 0, None)
+        # self.public_list[0] = self.dummy_client
 
         # recording
         self.recording_file_dir = f"./recording/rm_{self.setuptime}"
@@ -59,6 +59,9 @@ class ChatroomHost:
         self.karaoke_song_list = dict()
         self.__incoming_karaoke_song_name = dict()
         self.isKaraokePlaying = False
+
+        # timeout counter
+        self.timeout_counter = 0
 
     def __init_recording_fileDir(self):
         try:
@@ -77,9 +80,6 @@ class ChatroomHost:
                     print(f"[Host - Text] Received a message from {data.name}: {data.data}")
                     # broadcast the message to all clients
                     await self.broadcast_message(data.data, ChatHeader.TEXT)
-                    # capture the message after : character
-                    c_message = data.data.split(":")[1]
-                    await self.broadcast_message(f"Repeater (0): You just said:{c_message}", ChatHeader.TEXT)
                 elif data.header == ChatHeader.INIT_CONNECTION:
                     self.__connected_clients.add(websocket)  # add the client to the list
                     # assign the client ID if the currentID is not in the list
@@ -109,8 +109,8 @@ class ChatroomHost:
                             senderID = client
                             break
                     # broadcast the message to all clients
-                    await self.broadcast_message(f"Repeater (0): I hear {data.name} you are speaking.", ChatHeader.TEXT)
-                    await self.broadcast_message(data.data, ChatHeader.AUDIO, None, senderID)
+                    await self.broadcast_message(f"[System]: I hear {data.name} you are speaking.", ChatHeader.TEXT)
+                    await self.broadcast_message(data.data, ChatHeader.AUDIO, websocket, senderID)
                 elif data.header == ChatHeader.RECORDING:
                     print("Receive recording header")
                     await self.broadcast_message('', ChatHeader.RECORDING)
@@ -213,6 +213,14 @@ class ChatroomHost:
             chatroom_list = json.dumps(
                 {client_id: client_info.to_json() for client_id, client_info in self.public_list.items()})
             await self.broadcast_message(chatroom_list, ChatHeader.CHATROOM_LIST)
+        else:
+            # check the number of people in the chatroom, if no one is in the chatroom, timeout counter add 1
+            if len(self.__connected_clients) == 0:
+                self.timeout_counter += 1
+            print(f"[Host - OnClear] Timeout counter: {self.timeout_counter}")
+            if self.timeout_counter >= 5:
+                print(f"[Host - OnClear] Timeout counter reached 10, closing the host application")
+                os._exit(0)
 
     def __broadcast_song(self, song_path):
         # separating the song byte into different parts

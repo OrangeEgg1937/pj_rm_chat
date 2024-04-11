@@ -24,6 +24,7 @@ class ChatHeader(Enum):
     KARAOKE_STOP = 15
     KARAOKE_START = 16
     KARAOKE_SONG_TRACKS = 18
+    CLIENT_HOST_CHATROOM = 19
 
 
 # define the Chat data
