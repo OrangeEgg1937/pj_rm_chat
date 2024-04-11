@@ -30,7 +30,7 @@ class VoiceRecordHandler:
         self._bit_per_sample = 16
         self._sample_rate = 44100
 
-        self._starting_time = -1  # -1 means not yet started
+        self._recording_start_time = -1  # -1 means not yet started
         self.recording_buffer = []
 
         # register the signal
@@ -109,7 +109,7 @@ class VoiceRecordHandler:
             file.close()
 
     # process of the received audio data
-    def __onReceivedAudio(self, message: ChatData):
+    def onReceivedAudio(self, decompressed_data: bytes):
         padding_time = 0
         if not self.isRecording:
             return
@@ -118,10 +118,6 @@ class VoiceRecordHandler:
         else:
             padding_time = time.time() - self._starting_time
             self._starting_time = time.time()
-
-        # decompress the audio data
-        print("Decompressing the audio data...", len(message.data))
-        decompressed_data = zlib.decompress(message.data)
 
         # check whether the audio need to be padded if the padding time is more than 1 second
         if padding_time > 1:
@@ -142,6 +138,7 @@ class VoiceRecordHandler:
         self.isRecording = False
         self.ui.recording_tips.setText("Recording end~")
         self.__generate_wav()
+        self._starting_time = -1
 
     # processing the recording file to wav file
     def __generate_wav(self):

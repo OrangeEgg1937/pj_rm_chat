@@ -134,6 +134,10 @@ class VoiceChatHandler:
         print("Decompressing the audio data...", len(message.data))
         decompressed_data = zlib.decompress(message.data)
 
+        # if the user is recording, then pass the audio data to record handler for recording
+        if self.recordHandler.isRecording:
+            self.recordHandler.onReceivedAudio(decompressed_data)
+
         audio = np.frombuffer(decompressed_data, dtype=np.int16)
 
         currentDateAndTime = datetime.now(pytz.utc)
