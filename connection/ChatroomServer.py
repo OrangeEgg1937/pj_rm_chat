@@ -55,7 +55,7 @@ class ChatroomServer:
                     await websocket.send("OK")
                     # start a new process to host the server
                     subprocess.Popen(["python", "host.py",
-                                      '-ip',f'{local_ip}',
+                                      '-ip',f'{host_ip}',
                                       '-port', f'{host_port}',
                                       '-name', f'{chatroom_name}',
                                       '-local',f'{local_ip}',
