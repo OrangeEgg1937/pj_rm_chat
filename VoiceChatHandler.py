@@ -19,7 +19,7 @@ from PyQt5.QtCore import Qt, QThread
 from UI.Ui_mainWindow import Ui_MainWindow
 from connection.data_definition import ChatHeader, ChatData
 from ConnectionHandler import ConnectionHandler
-from VoiceRecordHandler import VoiceRecordHandler
+from VoiceRecordHandler import VoiceRecordHandler, RecordingFragments
 
 # define the sample rate
 SAMPLE_RATE = 44100
@@ -106,7 +106,8 @@ class VoiceChatHandler:
             self.connectionHandler.send_data(compressed_data, ChatHeader.AUDIO)
             # if the user is recording, then pass the audio data to record handler for recording
             if self.recordHandler.isRecording:
-                self.recordHandler.recording_buffer.append(temp)
+                fragment = RecordingFragments(temp)
+                self.recordHandler.recording_buffer.append(fragment)
             # clear the audio data
             self.single_audio_data = b''
             # flush the socket

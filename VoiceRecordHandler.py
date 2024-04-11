@@ -15,6 +15,30 @@ from connection.data_definition import ChatHeader, ChatData
 from ConnectionHandler import ConnectionHandler
 from connection.host import ChatroomHost
 
+# define the sample rate
+SAMPLE_RATE = 44100
+
+
+class RecordingFragments:
+    def __init__(self, raw_bytes):
+        self.raw_bytes = raw_bytes
+        self.received_time = time.time()
+
+    def extract_with_start_end_time(self, start_time, end_time):
+        # padding the 0 bytes if the start time earlier than the recorded time
+        if abs(start_time - self.received_time) > 0.1:  # padding if the time difference is more than 0.1 second
+            padding_size = int((self.received_time - start_time) * SAMPLE_RATE)
+            padding_data = np.zeros(padding_size, dtype=np.int16).tobytes()
+            self.raw_bytes = padding_data + self.raw_bytes
+
+        # padding the 0 bytes if the end time later than the recorded time
+        if abs(end_time - self.received_time) > 0.1:  # padding if the time difference is more than 0.1 second
+            padding_size = int((end_time - self.received_time) * SAMPLE_RATE)
+            padding_data = np.zeros(padding_size, dtype=np.int16).tobytes()
+            self.raw_bytes = self.raw_bytes + padding_data
+
+        return self.raw_bytes
+
 
 # define the Text Message Box Handler
 class VoiceRecordHandler:
@@ -31,6 +55,7 @@ class VoiceRecordHandler:
         self._sample_rate = 44100
 
         self._recording_start_time = -1  # -1 means not yet started
+        self._recording_end_time = -1  # -1 means not yet started
         self.recording_buffer = []
 
         # register the signal
@@ -113,47 +138,55 @@ class VoiceRecordHandler:
         padding_time = 0
         if not self.isRecording:
             return
-        if self._starting_time == -1:
-            self._starting_time = time.time()
-        else:
-            padding_time = time.time() - self._starting_time
-            self._starting_time = time.time()
 
-        # check whether the audio need to be padded if the padding time is more than 1 second
-        if padding_time > 1:
-            # padding the zero audio raw data bytes according to the padding time
-            padding_size = int(padding_time * self.sample_rate * self.num_channels * self.bits_per_sample / 8)
-            padding_data = np.zeros(padding_size, dtype=np.int16).tobytes()
-            self.recording_buffer.append(padding_data)
-
-        # add the audio data to the buffer
-        self.recording_buffer.append(decompressed_data)
+        fragment = RecordingFragments(decompressed_data)
+        self.recording_buffer.append(fragment)
 
     # client start recording the incoming audio
     def __onRecordStart(self):
         self.isRecording = True
+        self._recording_start_time = time.time()
         self.ui.recording_tips.setText("You are recording")
 
     def __onRecordFinish(self):
         self.isRecording = False
+        self._recording_end_time = time.time()
         self.ui.recording_tips.setText("Recording end~")
-        self.__generate_wav()
-        self._starting_time = -1
+        raw_bytes_audio = self.__combine_audio()
+        self.__generate_wav(raw_bytes_audio)
+        self._recording_start_time = -1
+        self._recording_end_time = -1
+
+    # combine the buffer into one audio file
+    def __combine_audio(self):
+        # getting all audio data into a new list
+        audio_data = []
+        for fragment in self.recording_buffer:
+            audio_data.append(
+                fragment.extract_with_start_end_time(self._recording_start_time, self._recording_end_time))
+
+        numpyBuffer = [np.frombuffer(buffer, dtype=np.int16) for buffer in audio_data]
+
+        # Find the length of the longest fragment
+        max_length = max(len(fragment) for fragment in numpyBuffer)
+
+        # Pad all fragments to the length of the longest fragment
+        padded_fragments = [np.pad(fragment, (0, max_length - len(fragment))) for fragment in numpyBuffer]
+
+        # mix the audio clips using mean in numpy array
+        result = np.mean(padded_fragments, axis=0).astype(np.int16).tobytes()
+
+        return result
 
     # processing the recording file to wav file
-    def __generate_wav(self):
+    def __generate_wav(self, raw_data: bytes):
         # set the file path and name of the recorded audio
         self.file_path = f"./recorded_{int(time.time())}_{self.connectionHandler.client.name}_.wav"
-
-        # calculate the total size of the audio data
-        total_size = 0
-        for data in self.recording_buffer:
-            total_size += len(data)
 
         # ChunkID (RIFF)
         content = 0x52494646.to_bytes(4, 'big')
         # ChunkSize
-        content += int(36 + total_size).to_bytes(4, 'little')
+        content += int(36 + len(raw_data)).to_bytes(4, 'little')
         # Format
         content += 0x57415645.to_bytes(4, 'big')
 
@@ -178,11 +211,10 @@ class VoiceRecordHandler:
         content += 0x64617461.to_bytes(4, 'big')
         # Subchunk2Size
         # Subchunk2Size == size of "data" subchunk = Subchunk2ID + subchunk2Size + raw data in bytes
-        subchunk2Size = total_size + 8
+        subchunk2Size = len(raw_data) + 8
         content += int(subchunk2Size).to_bytes(4, 'little')
         # Data
-        for data in self.recording_buffer:
-            content += data
+        content += raw_data
 
         # save the audio data to the file
         with open(self.file_path, "wb") as file:
