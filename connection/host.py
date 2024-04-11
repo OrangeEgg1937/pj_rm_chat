@@ -1,7 +1,15 @@
 import asyncio
 import json
+from datetime import datetime
+import time
+import pytz
+import zlib
+
+import base64
 import websockets
 import argparse
+import os
+
 from connection.data_definition import ChatHeader, ChatData
 from websockets.server import serve
 
@@ -24,6 +32,7 @@ class ChatClientInfo:
 class ChatroomHost:
     def __init__(self, host_ip: str, host_name: str, port: int = 32800, local_address="localhost",
                  chatroom_server_ip="localhost"):
+        self.setuptime = time.time()
         self.host_ip = host_ip
         self.port = port
         self.__connected_clients = set()
@@ -39,9 +48,16 @@ class ChatroomHost:
         # self.public_list[0] = self.dummy_client
 
         # recording
-        self.isRecording = False
-        self.audio_buffers = dict()
-        self.mixed_audio = b''
+        self.recording_file_dir = f"./recording/rm_{self.setuptime}"
+        self.current_recording_file_list = []
+        self.__init_recording_fileDir()
+        self.__incoming_filename = dict()
+
+    def __init_recording_fileDir(self):
+        try:
+            os.makedirs(self.recording_file_dir)
+        except FileExistsError:
+            print(f"[Host - Recording] Directory already exists: {self.recording_file_dir}")
 
     async def __connection_handler(self, websocket, path):
         # when there is a connection, hold it
@@ -95,8 +111,39 @@ class ChatroomHost:
                 elif data.header == ChatHeader.DONE_RECORDING:
                     print("Receive DONE recording header")
                     await self.broadcast_message('', ChatHeader.DONE_RECORDING)
+                elif data.header == ChatHeader.RECORDING_FILE_NAME:
+                    print(f"[Host - Recording] Received a recording file name: {data.data}")
+                    self.__incoming_filename[websocket] = data.data
                 elif data.header == ChatHeader.RECORDING_FILE:
-                    await self.broadcast_message('sending a recording', ChatHeader.RECORDING_FILE)
+                    await self.broadcast_message('[System]: Received a audio file', ChatHeader.TEXT)
+                    # convert the bytes to a .wav file
+                    filename = self.__incoming_filename[websocket]
+                    # convert the base64 data back to bytes
+                    recording = base64.b64decode(data.data)
+                    # decompress the data
+                    recording = zlib.decompress(recording)
+                    with open(f"{self.recording_file_dir}/{filename}", "wb") as file:
+                        file.write(recording)
+                        file.close()
+                    # add the file into file list
+                    self.current_recording_file_list.append(filename)
+                    # broadcast the new file list to all client
+                    await self.broadcast_message(json.dumps(self.current_recording_file_list), ChatHeader.RECORDING_FILE)
+                elif data.header == ChatHeader.REQUEST_RECORDING_FILE:
+                    # get the requested file name
+                    filename = data.data
+                    # check if the file is in the list
+                    if filename in self.current_recording_file_list:
+                        # send the file to the client
+                        with open(f"{self.recording_file_dir}/{filename}", "rb") as file:
+                            # packing the data
+                            message = ChatData(data=file.read(), header=ChatHeader.RECORDING_FILE, senderIP=self.host_ip,
+                                               name=self.host_name)
+                            await websocket.send(message)
+                            file.close()
+                    else:
+                        message = ChatData(data="File not found", header=ChatHeader.RECORDING_FILE, senderIP=self.host_ip, name=self.host_name)
+                        await websocket.send(message)
 
             except websockets.exceptions.ConnectionClosedOK:
                 print(f"[Host - OnClose] Connection closed: {websocket}")

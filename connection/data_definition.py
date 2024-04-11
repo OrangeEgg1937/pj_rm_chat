@@ -16,6 +16,8 @@ class ChatHeader(Enum):
     RECORDING = 8
     DONE_RECORDING = 9
     RECORDING_FILE = 10
+    RECORDING_FILE_NAME = 11
+    REQUEST_RECORDING_FILE = 12
 
 
 # define the Chat data

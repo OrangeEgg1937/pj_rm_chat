@@ -123,6 +123,7 @@ class VoiceChatHandler:
             self.ui.tipsMessage.setText("Push to talk")
             self.isSpeaking = False
             self._stream.stop()
+            self.single_audio_data = b''
         else:
             self.ui.tipsMessage.setText("Now speaking...")
             self.isSpeaking = True

@@ -1,6 +1,6 @@
 import sys
 import json
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QListWidgetItem
 from PyQt5.QtCore import Qt, QThread
 from PyQt5.QtWebSockets import QWebSocket
 from qasync import QEventLoop
@@ -8,6 +8,8 @@ import zlib
 import numpy as np
 import wave
 import time
+import os
+import base64
 
 from UI.Ui_mainWindow import Ui_MainWindow
 from connection.host import ChatroomHost
@@ -27,13 +29,13 @@ class RecordingFragments:
     def extract_with_start_end_time(self, start_time, end_time):
         # padding the 0 bytes if the start time earlier than the recorded time
         if abs(start_time - self.received_time) > 0.1:  # padding if the time difference is more than 0.1 second
-            padding_size = int((self.received_time - start_time) * SAMPLE_RATE)
+            padding_size = abs(int((self.received_time - start_time) * SAMPLE_RATE))
             padding_data = np.zeros(padding_size, dtype=np.int16).tobytes()
             self.raw_bytes = padding_data + self.raw_bytes
 
         # padding the 0 bytes if the end time later than the recorded time
         if abs(end_time - self.received_time) > 0.1:  # padding if the time difference is more than 0.1 second
-            padding_size = int((end_time - self.received_time) * SAMPLE_RATE)
+            padding_size = abs(int((end_time - self.received_time) * SAMPLE_RATE))
             padding_data = np.zeros(padding_size, dtype=np.int16).tobytes()
             self.raw_bytes = self.raw_bytes + padding_data
 
@@ -49,6 +51,7 @@ class VoiceRecordHandler:
         self.connectionHandler = connectionHandler
         self.isRecording = False
         self.file_path = "./recorded.wav"
+        self.downloading_file_name = ""
 
         self._num_channels = 1
         self._bit_per_sample = 16
@@ -60,7 +63,11 @@ class VoiceRecordHandler:
 
         # register the signal
         self.ui.recording_voice.clicked.connect(self.__onRecordBtnClick)
-        # self.ui.play_recording.clicked.connect(self.__requestRecordingFile)
+        self.ui.play_recording.clicked.connect(self.__onUserClickPlayRecording)
+
+        # register the header callback
+        self.connectionHandler.connect_header_callback(ChatHeader.RECORDING_FILE, self.__onRecordingFileListReceived)
+        self.connectionHandler.connect_header_callback(ChatHeader.REQUEST_RECORDING_FILE, self.__onRecordingFileReceived)
 
     @property
     def num_channels(self):
@@ -154,6 +161,7 @@ class VoiceRecordHandler:
         self.ui.recording_tips.setText("Recording end~")
         raw_bytes_audio = self.__combine_audio()
         self.__generate_wav(raw_bytes_audio)
+        self.__transfer_recording()
         self._recording_start_time = -1
         self._recording_end_time = -1
 
@@ -222,6 +230,64 @@ class VoiceRecordHandler:
             file.close()
 
     def __transfer_recording(self):
-        if self.isRecording:
+        if self.file_path == "":
             return
-        self.connectionHandler.send_data('', ChatHeader.RECORDING_FILE)
+        with open(self.file_path, "rb") as file:
+            filename = self.file_path.split("/")[-1]
+            self.connectionHandler.send_data(filename, ChatHeader.RECORDING_FILE_NAME)
+            data = file.read()
+            # compress the data
+            data = zlib.compress(data)
+            self.connectionHandler.send_data(data, ChatHeader.RECORDING_FILE)
+
+    def __onRecordingFileListReceived(self, message: ChatData):
+        # clear the current list
+        self.ui.recording_list.clear()
+
+        file_list = json.loads(message.data)
+
+        for file in file_list:
+            item = QListWidgetItem(file)
+            self.ui.recording_list.addItem(item)
+
+    def __onUserClickPlayRecording(self):
+        # get the selected item
+        item = self.ui.recording_list.currentItem()
+        if item is None:
+            return
+
+        # get the file name
+        file_name = item.text()
+
+        # construct the full path of the file
+        file_path = os.path.join("./record_download", file_name)
+
+        # check if the file exists
+        if os.path.exists(file_path):
+            print("Playing the recording...")
+        else:
+            self.downloading_file_name = file_name
+            self.ui.play_recording.setEnabled(False)
+            self.ui.recording_tips.setText("Downloading the file...Please wait")
+            self.connectionHandler.send_data(file_name, ChatHeader.REQUEST_RECORDING_FILE)
+
+    def __onRecordingFileReceived(self, data: ChatData):
+        # get the file name
+        raw_data = data.data
+
+        # convert back to bytes from base64
+        raw_data = base64.b64decode(raw_data)
+
+        # decompress the data
+        raw_data = zlib.decompress(raw_data)
+
+        # construct the full path of the file
+        file_path = os.path.join("./record_download", self.downloading_file_name)
+
+        # save the file
+        with open(file_path, "wb") as file:
+            file.write(raw_data)
+            file.close()
+
+        self.ui.play_recording.setEnabled(True)
+        self.ui.recording_tips.setText("File downloaded successfully, you can select and play the file now")

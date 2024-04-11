@@ -21,6 +21,24 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <layout class="QHBoxLayout" name="statusLayout">
+      <item>
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Connection:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="connectionMsg">
+        <property name="text">
+         <string>[No connection]</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
     <item row="1" column="0">
      <widget class="QFrame" name="verticalFrame">
       <property name="sizePolicy">
@@ -496,24 +514,6 @@
       </layout>
      </widget>
     </item>
-    <item row="0" column="0">
-     <layout class="QHBoxLayout" name="statusLayout">
-      <item>
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>Connection:</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="connectionMsg">
-        <property name="text">
-         <string>[No connection]</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
     <item row="1" column="3">
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
@@ -591,6 +591,42 @@
       </item>
      </layout>
     </item>
+    <item row="0" column="3">
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLabel" name="label_7">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>30</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>30</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Status:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="StatusMsg">
+        <property name="text">
+         <string>N/A</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
     <item row="1" column="4">
      <layout class="QVBoxLayout" name="verticalLayout_4">
       <item>
@@ -660,13 +696,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="stop_recording">
-          <property name="text">
-           <string>Stop recording</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QPushButton" name="play_recording">
           <property name="text">
            <string/>
@@ -687,7 +716,17 @@
        </layout>
       </item>
       <item>
-       <widget class="QListWidget" name="listWidget"/>
+       <widget class="QPushButton" name="stop_recording">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Stop Playback</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QListWidget" name="recording_list"/>
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -795,42 +834,6 @@
          </size>
         </property>
        </spacer>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="3">
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <widget class="QLabel" name="label_7">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>30</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>30</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Status:</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="StatusMsg">
-        <property name="text">
-         <string>N/A</string>
-        </property>
-       </widget>
       </item>
      </layout>
     </item>
