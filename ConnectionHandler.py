@@ -9,7 +9,6 @@ from PyQt5.QtWebSockets import QWebSocket
 from qasync import QEventLoop
 
 from UI.Ui_mainWindow import Ui_MainWindow
-from connection.host import ChatroomHost
 from connection.data_definition import ChatHeader, ChatData
 
 
@@ -23,8 +22,7 @@ class ClientInfo:
 
 class ConnectionHandler:
     def __init__(self, app: QApplication, mainWindow: QMainWindow, ui: Ui_MainWindow,
-                 event_loop: QEventLoop,
-                 host: ChatroomHost = None):
+                 event_loop: QEventLoop):
         # initialize all the necessary objects
         self.app = app
         self.mainWindow = mainWindow

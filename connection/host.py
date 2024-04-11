@@ -4,6 +4,7 @@ from datetime import datetime
 import time
 import pytz
 import zlib
+import threading
 
 import base64
 import websockets
@@ -44,14 +45,20 @@ class ChatroomHost:
         self.chatroom_server_ip = chatroom_server_ip
 
         # ONLY FOR AWS TESTING SERVER
-        # self.dummy_client = ChatClientInfo("Repeater", 0, None)
-        # self.public_list[0] = self.dummy_client
+        self.dummy_client = ChatClientInfo("Repeater", 0, None)
+        self.public_list[0] = self.dummy_client
 
         # recording
         self.recording_file_dir = f"./recording/rm_{self.setuptime}"
         self.current_recording_file_list = []
         self.__init_recording_fileDir()
         self.__incoming_filename = dict()
+
+        # karaoke song list
+        self.karaoke_song_dir = "../vocal_audio"
+        self.karaoke_song_list = dict()
+        self.__incoming_karaoke_song_name = dict()
+        self.isKaraokePlaying = False
 
     def __init_recording_fileDir(self):
         try:
@@ -101,10 +108,9 @@ class ChatroomHost:
                         if self.public_list[client].websocket == websocket:
                             senderID = client
                             break
-                            
                     # broadcast the message to all clients
                     await self.broadcast_message(f"Repeater (0): I hear {data.name} you are speaking.", ChatHeader.TEXT)
-                    await self.broadcast_message(data.data, ChatHeader.AUDIO, websocket, senderID)
+                    await self.broadcast_message(data.data, ChatHeader.AUDIO, None, senderID)
                 elif data.header == ChatHeader.RECORDING:
                     print("Receive recording header")
                     await self.broadcast_message('', ChatHeader.RECORDING)
@@ -136,15 +142,56 @@ class ChatroomHost:
                     if filename in self.current_recording_file_list:
                         # send the file to the client
                         with open(f"{self.recording_file_dir}/{filename}", "rb") as file:
+                            # read the file
+                            file_data = file.read()
+                            # compress the data
+                            file_data = zlib.compress(file_data)
                             # packing the data
-                            message = ChatData(data=file.read(), header=ChatHeader.RECORDING_FILE, senderIP=self.host_ip,
+                            message = ChatData(data=file_data, header=ChatHeader.REQUEST_RECORDING_FILE, senderIP=self.host_ip,
                                                name=self.host_name)
+                            # convert the message to json
+                            message = json.dumps(message.to_json())
                             await websocket.send(message)
                             file.close()
                     else:
-                        message = ChatData(data="File not found", header=ChatHeader.RECORDING_FILE, senderIP=self.host_ip, name=self.host_name)
+                        message = ChatData(data="[System]: File not found", header=ChatHeader.TEXT, senderIP=self.host_ip, name=self.host_name)
+                        message = json.dumps(message.to_json())
                         await websocket.send(message)
-
+                elif data.header == ChatHeader.KARAOKE_SONG_NAME:
+                    print(f"[Host - Karaoke] Received a karaoke song name: {data.data}")
+                    self.__incoming_karaoke_song_name[websocket] = data.data
+                elif data.header == ChatHeader.KARAOKE_SONG:
+                    print(f"[Host - Karaoke] Received a karaoke song data")
+                    # get the song name
+                    song_name = self.__incoming_karaoke_song_name[websocket]
+                    # convert the base64 data back to bytes
+                    song_data = base64.b64decode(data.data)
+                    # decompress the data
+                    song_data = zlib.decompress(song_data)
+                    # save the song to the path
+                    self.add_karaoke_song(song_name, song_data)
+                    # broadcast the new song list to all client
+                    song_list = json.dumps(self.karaoke_song_list)
+                    await self.broadcast_message(song_list, ChatHeader.KARAOKE_SONG_LIST)
+                elif data.header == ChatHeader.KARAOKE_START:
+                    print(f"[Host - Karaoke] Received a karaoke start request: {data.data}")
+                    if self.isKaraokePlaying:
+                        return # if the karaoke is playing, then ignore the request
+                    # check if the song is in the list
+                    if data.data in self.karaoke_song_list:
+                        # get the song path
+                        song_path = self.karaoke_song_list[data.data]
+                        # send the song to all clients
+                        await self.broadcast_message(song_path, ChatHeader.KARAOKE_START)
+                        self.isKaraokePlaying = True
+                        # start the karaoke song broadcast thread
+                        threading.Thread(target=self.__broadcast_song, args=(song_path,)).start()
+                    else:
+                        print("[Host - Karaoke] Song not found")
+                elif data.header == ChatHeader.KARAOKE_STOP:
+                    print(f"[Host - Karaoke] Received a karaoke stop request: {data.data}")
+                    self.isKaraokePlaying = False
+                    await self.broadcast_message("", ChatHeader.KARAOKE_STOP)
             except websockets.exceptions.ConnectionClosedOK:
                 print(f"[Host - OnClose] Connection closed: {websocket}")
                 break
@@ -166,6 +213,35 @@ class ChatroomHost:
             chatroom_list = json.dumps(
                 {client_id: client_info.to_json() for client_id, client_info in self.public_list.items()})
             await self.broadcast_message(chatroom_list, ChatHeader.CHATROOM_LIST)
+
+    def __broadcast_song(self, song_path):
+        # separating the song byte into different parts
+        with open(song_path, "rb") as file:
+            song_data = file.read()
+            file.close()
+
+        # compress the data
+        song_data = zlib.compress(song_data)
+
+        # send the song to all clients with every 30000 bytes
+        for i in range(0, len(song_data), 30000):
+            # check the isPlaying value
+            if not self.isKaraokePlaying:
+                return
+            # get the data
+            data = song_data[i:i + 30000]
+            # send the data to all clients
+            self.broadcast_message(data, ChatHeader.KARAOKE_SONG)
+
+    # adding a song to the karaoke list
+    def add_karaoke_song(self, song_name, song_data):
+        # convert the song_data into a file
+        with open(f"{self.karaoke_song_dir}/{song_name}", "wb") as file:
+            file.write(song_data)
+            file.close()
+
+        # add the song to the list
+        self.karaoke_song_list[song_name] = f"{self.karaoke_song_dir}/{song_name}"
 
     # broadcast the message to all clients OR broadcast the message to all clients except the sender
     async def broadcast_message(self, message: str, header: ChatHeader = ChatHeader.TEXT, ignoreSender=None, senderID=None):

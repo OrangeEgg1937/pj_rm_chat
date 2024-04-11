@@ -42,7 +42,13 @@ class AudioPlayer:
                 audio = self.audioBuffer.get()
 
                 # play the audio
-                self._audioOut.write(audio)  # Write to the OutputStream continuously
+                try:
+                    self._audioOut.write(audio)  # Write to the OutputStream continuously
+                except Exception as e:
+                    # reset the audio stream
+                    self._audioOut.stop()
+                    self._audioOut = sd.OutputStream(channels=1, dtype='int16', samplerate=self.sample_rate, callback=None)
+                    self._audioOut.start()
             else:
                 # if there is no audio data, wait for a short period of time
                 time.sleep(0.1)

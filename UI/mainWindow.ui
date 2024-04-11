@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>910</width>
-    <height>831</height>
+    <height>842</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -749,12 +749,215 @@
            <string notr="true">background-color:rgb(255, 255, 255)</string>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="voice">
            <attribute name="title">
             <string>Karaoke</string>
            </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_7">
+            <item>
+             <widget class="QLabel" name="karaoke_tips">
+              <property name="text">
+               <string>[No one playing song now]</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="karaoke_path">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <item>
+               <widget class="QPushButton" name="karaoke_select_file">
+                <property name="styleSheet">
+                 <string notr="true">QPushButton{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+     border: 2px solid #C4C4C3;
+     border-radius: 4px;
+     min-width: 8ex;
+     padding: 2px;
+}
+
+QPushButton:hover{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #fafafa, stop: 0.4 #f4f4f4,
+                                 stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);
+}
+
+QPushButton:pressed{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #e7e7e7, stop: 0.4 #f4f4f4,
+                                 stop: 0.5 #eeeeee, stop: 1.0 #fafafa);
+}
+
+</string>
+                </property>
+                <property name="text">
+                 <string>Select file</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="karaoke_upload_song">
+                <property name="styleSheet">
+                 <string notr="true">QPushButton{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+     border: 2px solid #C4C4C3;
+     border-radius: 4px;
+     min-width: 8ex;
+     padding: 2px;
+}
+
+QPushButton:hover{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #fafafa, stop: 0.4 #f4f4f4,
+                                 stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);
+}
+
+QPushButton:pressed{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #e7e7e7, stop: 0.4 #f4f4f4,
+                                 stop: 0.5 #eeeeee, stop: 1.0 #fafafa);
+}
+
+</string>
+                </property>
+                <property name="text">
+                 <string>Upload to host</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>Song list:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListWidget" name="karaoke_song_list"/>
+            </item>
+            <item>
+             <widget class="QPushButton" name="karaoke_refresh">
+              <property name="styleSheet">
+               <string notr="true">QPushButton{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+     border: 2px solid #C4C4C3;
+     border-radius: 4px;
+     min-width: 8ex;
+     padding: 2px;
+}
+
+QPushButton:hover{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #fafafa, stop: 0.4 #f4f4f4,
+                                 stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);
+}
+
+QPushButton:pressed{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #e7e7e7, stop: 0.4 #f4f4f4,
+                                 stop: 0.5 #eeeeee, stop: 1.0 #fafafa);
+}
+
+</string>
+              </property>
+              <property name="text">
+               <string>Refresh list</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="karaoke_play">
+              <property name="styleSheet">
+               <string notr="true">QPushButton{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+     border: 2px solid #C4C4C3;
+     border-radius: 4px;
+     min-width: 8ex;
+     padding: 2px;
+}
+
+QPushButton:hover{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #fafafa, stop: 0.4 #f4f4f4,
+                                 stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);
+}
+
+QPushButton:pressed{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #e7e7e7, stop: 0.4 #f4f4f4,
+                                 stop: 0.5 #eeeeee, stop: 1.0 #fafafa);
+}
+
+</string>
+              </property>
+              <property name="text">
+               <string>Play the song</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="karaoke_stop_curr">
+              <property name="styleSheet">
+               <string notr="true">QPushButton{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+     border: 2px solid #C4C4C3;
+     border-radius: 4px;
+     min-width: 8ex;
+     padding: 2px;
+}
+
+QPushButton:hover{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #fafafa, stop: 0.4 #f4f4f4,
+                                 stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);
+}
+
+QPushButton:pressed{
+     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                 stop: 0 #e7e7e7, stop: 0.4 #f4f4f4,
+                                 stop: 0.5 #eeeeee, stop: 1.0 #fafafa);
+}
+
+</string>
+              </property>
+              <property name="text">
+               <string>Stop the song</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
           </widget>
           <widget class="QWidget" name="tab_2">
            <attribute name="title">
@@ -858,7 +1061,7 @@
      <x>0</x>
      <y>0</y>
      <width>910</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

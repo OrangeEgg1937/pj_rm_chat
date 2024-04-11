@@ -12,10 +12,8 @@ import os
 import base64
 
 from UI.Ui_mainWindow import Ui_MainWindow
-from connection.host import ChatroomHost
 from connection.data_definition import ChatHeader, ChatData
 from ConnectionHandler import ConnectionHandler
-from connection.host import ChatroomHost
 
 # define the sample rate
 SAMPLE_RATE = 44100
@@ -98,47 +96,6 @@ class VoiceRecordHandler:
             self.isRecording = False
             print("Recording finished")
             self.__onRecordFinish()
-
-    def generate_wav(self, message: ChatData):
-        # ChunkID (RIFF)
-        content = 0x52494646.to_bytes(4, 'big')
-        # ChunkSize
-        content += int(36 + len(message.data)).to_bytes(4, 'little')
-        # Format
-        content += 0x57415645.to_bytes(4, 'big')
-
-        # Subchunk1ID (fmt-chunk)
-        content += 0x666d7420.to_bytes(4, 'big')
-        # Subchunk1Size (16 for PCM)
-        content += int(16).to_bytes(4, 'little')
-        # AudioFormat (PCM)
-        content += int(1).to_bytes(2, 'little')
-        # NumChannels
-        content += int(self._num_channels).to_bytes(2, 'little')
-        # SampleRate
-        content += int(self._num_channels).to_bytes(4, 'little')
-        # ByteRate
-        content += int(self.bytes_rate).to_bytes(4, 'little')
-        # BlockAlign
-        content += int(self.block_align).to_bytes(2, 'little')
-        # BitsPerSample
-        content += int(self.bits_per_sample).to_bytes(2, 'little')
-
-        # Subchunk2ID (data-chunk)
-        content += 0x64617461.to_bytes(4, 'big')
-        # Subchunk2Size
-        # Subchunk2Size == size of "data" subchunk = Subchunk2ID + subchunk2Size + raw data in bytes
-        subchunk2Size = len(message.data) + 8
-        content += int(subchunk2Size).to_bytes(4, 'little')
-        # Data
-        content += message.data
-
-        return content
-
-    def write(self, message: ChatData):
-        with open(self.file_path, "wb") as file:
-            file.write(self.generate_wav(message))
-            file.close()
 
     # process of the received audio data
     def onReceivedAudio(self, decompressed_data: bytes):

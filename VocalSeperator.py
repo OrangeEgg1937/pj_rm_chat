@@ -52,7 +52,7 @@ class VocalSeperator():
     def is_finished(self):
         return self.pointer >= len(self.raw_data)
 
-    def DEBUG_output_to_file(self, file_path):
+    def output_to_file(self, file_path):
         import wave
         with wave.open(file_path, "wb") as wav_file:
             wav_file.setnchannels(1)
@@ -62,5 +62,6 @@ class VocalSeperator():
 
 if __name__ == '__main__':
     separator = VocalSeperator()
-    separator.seperate_file(".\raw_audio_file\song.mp3")
-    separator.output_to_file(".\vocal_audio\song.wav")
+    separator.seperate_file(".\\raw_audio_file\song.mp3")
+    separator.output_to_file(".\\vocal_audio\song.wav")
+    print("Done")

@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(910, 831)
+        MainWindow.resize(910, 842)
         MainWindow.setMinimumSize(QtCore.QSize(910, 700))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -365,6 +365,156 @@ class Ui_MainWindow(object):
         self.ExtensionTag.setObjectName("ExtensionTag")
         self.voice = QtWidgets.QWidget()
         self.voice.setObjectName("voice")
+        self.verticalLayout_7 = QtWidgets.QVBoxLayout(self.voice)
+        self.verticalLayout_7.setObjectName("verticalLayout_7")
+        self.karaoke_tips = QtWidgets.QLabel(self.voice)
+        self.karaoke_tips.setObjectName("karaoke_tips")
+        self.verticalLayout_7.addWidget(self.karaoke_tips)
+        self.karaoke_path = QtWidgets.QLineEdit(self.voice)
+        self.karaoke_path.setEnabled(False)
+        self.karaoke_path.setObjectName("karaoke_path")
+        self.verticalLayout_7.addWidget(self.karaoke_path)
+        self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_4.setObjectName("horizontalLayout_4")
+        self.karaoke_select_file = QtWidgets.QPushButton(self.voice)
+        self.karaoke_select_file.setStyleSheet("QPushButton{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,\n"
+"                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);\n"
+"     border: 2px solid #C4C4C3;\n"
+"     border-radius: 4px;\n"
+"     min-width: 8ex;\n"
+"     padding: 2px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #fafafa, stop: 0.4 #f4f4f4,\n"
+"                                 stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #e7e7e7, stop: 0.4 #f4f4f4,\n"
+"                                 stop: 0.5 #eeeeee, stop: 1.0 #fafafa);\n"
+"}\n"
+"\n"
+"")
+        self.karaoke_select_file.setObjectName("karaoke_select_file")
+        self.horizontalLayout_4.addWidget(self.karaoke_select_file)
+        self.karaoke_upload_song = QtWidgets.QPushButton(self.voice)
+        self.karaoke_upload_song.setStyleSheet("QPushButton{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,\n"
+"                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);\n"
+"     border: 2px solid #C4C4C3;\n"
+"     border-radius: 4px;\n"
+"     min-width: 8ex;\n"
+"     padding: 2px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #fafafa, stop: 0.4 #f4f4f4,\n"
+"                                 stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #e7e7e7, stop: 0.4 #f4f4f4,\n"
+"                                 stop: 0.5 #eeeeee, stop: 1.0 #fafafa);\n"
+"}\n"
+"\n"
+"")
+        self.karaoke_upload_song.setObjectName("karaoke_upload_song")
+        self.horizontalLayout_4.addWidget(self.karaoke_upload_song)
+        self.verticalLayout_7.addLayout(self.horizontalLayout_4)
+        self.label_3 = QtWidgets.QLabel(self.voice)
+        self.label_3.setObjectName("label_3")
+        self.verticalLayout_7.addWidget(self.label_3)
+        self.karaoke_song_list = QtWidgets.QListWidget(self.voice)
+        self.karaoke_song_list.setObjectName("karaoke_song_list")
+        self.verticalLayout_7.addWidget(self.karaoke_song_list)
+        self.karaoke_refresh = QtWidgets.QPushButton(self.voice)
+        self.karaoke_refresh.setStyleSheet("QPushButton{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,\n"
+"                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);\n"
+"     border: 2px solid #C4C4C3;\n"
+"     border-radius: 4px;\n"
+"     min-width: 8ex;\n"
+"     padding: 2px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #fafafa, stop: 0.4 #f4f4f4,\n"
+"                                 stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #e7e7e7, stop: 0.4 #f4f4f4,\n"
+"                                 stop: 0.5 #eeeeee, stop: 1.0 #fafafa);\n"
+"}\n"
+"\n"
+"")
+        self.karaoke_refresh.setObjectName("karaoke_refresh")
+        self.verticalLayout_7.addWidget(self.karaoke_refresh)
+        self.karaoke_play = QtWidgets.QPushButton(self.voice)
+        self.karaoke_play.setStyleSheet("QPushButton{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,\n"
+"                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);\n"
+"     border: 2px solid #C4C4C3;\n"
+"     border-radius: 4px;\n"
+"     min-width: 8ex;\n"
+"     padding: 2px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #fafafa, stop: 0.4 #f4f4f4,\n"
+"                                 stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #e7e7e7, stop: 0.4 #f4f4f4,\n"
+"                                 stop: 0.5 #eeeeee, stop: 1.0 #fafafa);\n"
+"}\n"
+"\n"
+"")
+        self.karaoke_play.setObjectName("karaoke_play")
+        self.verticalLayout_7.addWidget(self.karaoke_play)
+        self.karaoke_stop_curr = QtWidgets.QPushButton(self.voice)
+        self.karaoke_stop_curr.setStyleSheet("QPushButton{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,\n"
+"                                 stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);\n"
+"     border: 2px solid #C4C4C3;\n"
+"     border-radius: 4px;\n"
+"     min-width: 8ex;\n"
+"     padding: 2px;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #fafafa, stop: 0.4 #f4f4f4,\n"
+"                                 stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+"                                 stop: 0 #e7e7e7, stop: 0.4 #f4f4f4,\n"
+"                                 stop: 0.5 #eeeeee, stop: 1.0 #fafafa);\n"
+"}\n"
+"\n"
+"")
+        self.karaoke_stop_curr.setObjectName("karaoke_stop_curr")
+        self.verticalLayout_7.addWidget(self.karaoke_stop_curr)
+        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_7.addItem(spacerItem1)
         self.ExtensionTag.addTab(self.voice, "")
         self.tab_2 = QtWidgets.QWidget()
         self.tab_2.setObjectName("tab_2")
@@ -387,13 +537,13 @@ class Ui_MainWindow(object):
         self.pitchValue = QtWidgets.QLabel(self.tab_2)
         self.pitchValue.setObjectName("pitchValue")
         self.verticalLayout_2.addWidget(self.pitchValue)
-        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem1)
+        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem2)
         self.ExtensionTag.addTab(self.tab_2, "")
         self.verticalLayout_6.addWidget(self.ExtensionTag)
         self.verticalLayout_4.addLayout(self.verticalLayout_6)
-        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_4.addItem(spacerItem2)
+        spacerItem3 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_4.addItem(spacerItem3)
         self.gridLayout.addLayout(self.verticalLayout_4, 1, 4, 1, 1)
         self.disconnect_btn = QtWidgets.QPushButton(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
@@ -405,7 +555,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.disconnect_btn, 0, 4, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 910, 26))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 910, 21))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
@@ -413,7 +563,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.ExtensionTag.setCurrentIndex(1)
+        self.ExtensionTag.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -449,6 +599,13 @@ class Ui_MainWindow(object):
         self.recording_tips.setText(_translate("MainWindow", "[Click the button to record]"))
         self.stop_recording.setText(_translate("MainWindow", "Stop Playback"))
         self.label_5.setText(_translate("MainWindow", "Extension"))
+        self.karaoke_tips.setText(_translate("MainWindow", "[No one playing song now]"))
+        self.karaoke_select_file.setText(_translate("MainWindow", "Select file"))
+        self.karaoke_upload_song.setText(_translate("MainWindow", "Upload to host"))
+        self.label_3.setText(_translate("MainWindow", "Song list:"))
+        self.karaoke_refresh.setText(_translate("MainWindow", "Refresh list"))
+        self.karaoke_play.setText(_translate("MainWindow", "Play the song"))
+        self.karaoke_stop_curr.setText(_translate("MainWindow", "Stop the song"))
         self.ExtensionTag.setTabText(self.ExtensionTag.indexOf(self.voice), _translate("MainWindow", "Karaoke"))
         self.pitchToggle.setText(_translate("MainWindow", "Voice Changer"))
         self.pitchValue.setText(_translate("MainWindow", "Pitch: 0"))

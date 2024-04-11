@@ -9,6 +9,7 @@ from ConnectionHandler import ConnectionHandler
 from TextMessageHandler import TextMessageHandler
 from VoiceChatHandler import VoiceChatHandler
 from VoiceRecordHandler import VoiceRecordHandler
+from KaraokeHandler import KaraokeHandler
 from qasync import QEventLoop
 
 # main program
@@ -40,7 +41,9 @@ if __name__ == "__main__":
     connectionHandler = ConnectionHandler(app=app, mainWindow=mainWindow, ui=ui, event_loop=event_loop)
     TextMessageHandler = TextMessageHandler(mainWindow, ui, connectionHandler)
     VoiceRecordHandler = VoiceRecordHandler(mainWindow, ui, connectionHandler)
+    # KaraokeHandler = KaraokeHandler(mainWindow, ui, connectionHandler)
     voiceChatHandler = VoiceChatHandler(mainWindow, ui, connectionHandler, VoiceRecordHandler)
+
 
     """
     Do not modify the code below
