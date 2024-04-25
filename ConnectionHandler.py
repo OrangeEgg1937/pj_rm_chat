@@ -50,12 +50,17 @@ class ConnectionHandler:
             # send the connection data to the server
             self.qtWebSocket.sendTextMessage(sending_data)
             self.isConnected = 1
+            # set the connection tips and status
+            self.ui.connectionMsg.setText("OK")
+            self.ui.StatusMsg.setText("Connected, You are:" + self.client.name)
 
         def __onDisconnected():
             # clean up the connection
             print("Disconnected from the chatroom server")
             self.setConnectionPlaneEnabled(True)
             self.isConnected = 0
+            self.ui.connectionMsg.setText("DCed")
+            self.ui.StatusMsg.setText("Disconnected")
 
         self.qtWebSocket = QWebSocket()
         self.qtWebSocket.connected.connect(__onConnected)
@@ -144,7 +149,7 @@ class ConnectionHandler:
         # get the message
         if message == "OK":
             print("Chatroom created successfully")
-            self.ui.StatusMsg.setText("Chatroom created successfully")
+            self.ui.StatusMsg.setText("Chatroom created successfully, find your room to join!")
         else:
             print("Chatroom creation failed")
             self.ui.StatusMsg.setText("Chatroom created failed")
@@ -211,7 +216,6 @@ class ConnectionHandler:
         self.ui.chatroom_name.setEnabled(available)
         self.ui.chatroom_port.setEnabled(available)
         self.ui.hostBtn.setEnabled(available)
-        self.ui.hostLocalhost.setEnabled(available)
         self.ui.connectBtn.setEnabled(available)
         self.ui.connectToLocalhost.setEnabled(available)
         self.ui.connect_to_chat.setEnabled(available)

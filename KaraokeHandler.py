@@ -3,6 +3,8 @@ import sys
 import queue
 import json
 import zlib
+
+import numpy as np
 import sounddevice as sd
 import threading
 import time
@@ -37,6 +39,8 @@ class SongPlayer:
                 # get the audio data from the buffer
                 audio = self.audioBuffer.get()
 
+                audio = np.frombuffer(audio, dtype=np.int16)
+
                 # play the audio
                 self._audioOut.write(audio)  # Write to the OutputStream continuously
             else:
@@ -60,7 +64,7 @@ class KaraokeHandler:
         self.ui.karaoke_upload_song.clicked.connect(self.__onUserUploadSong)
         self.ui.karaoke_play.clicked.connect(self.__onUserClickStartSong)
         self.ui.karaoke_stop_curr.clicked.connect(self.__onUserClickStopSong)
-        self.ui.disconnect_btn.clicked.connect(self.transfer_song)
+        self.ui.karaoke_refresh.clicked.connect(self.__RequestSongList)
 
         # add the header callback
         self.connectionHandler.connect_header_callback(ChatHeader.KARAOKE_SONG_LIST, self.__onSongListReceived)
@@ -83,7 +87,8 @@ class KaraokeHandler:
         # get the file path from user input
         file_path = self.ui.karaoke_path.text()
         # start a new thread to remove the vocal from the song
-        threading.Thread(target=self.vocal_seperator_thread, args=(file_path,)).start()
+        # threading.Thread(target=self.vocal_seperator_thread, args=(file_path,)).start()
+
         # set the tips to the UI
         self.ui.karaoke_tips.setText("Uploading, please wait...")
         # disable the upload button
@@ -91,6 +96,8 @@ class KaraokeHandler:
         # set the file name to server
         file_name = file_path.split("/")[-1]
         self.connectionHandler.send_data(file_name, ChatHeader.KARAOKE_SONG_NAME)
+
+        self.transfer_song()
 
     def vocal_seperator_thread(self, file_path):
         # get the name of the file
@@ -100,21 +107,36 @@ class KaraokeHandler:
         vocal_seperator.output_to_file("vocal_audio/" + self.curr_file_name)
         print("Vocal removed")
 
-    def transfer_song(self, file_path):
+    def transfer_song(self):
+        # get the file path from user input
+        file_path = self.ui.karaoke_path.text()
+
+        self.curr_file_name = file_path.split("/")[-1]
+
+        print("Upload: " + self.curr_file_name)
+
         # after the vocal is removed, transfer the file to the server
         with open("./vocal_audio/" + self.curr_file_name, "rb") as file:
-            # flush the socket
-            data = file.read()
-            data = zlib.compress(data)
-            # check the file size
-            if sys.getsizeof(data) > 50000:
-                num_of_chunks = len(data) // 50000
-                self.connectionHandler.send_data(num_of_chunks, ChatHeader.KARAOKE_SONG_TRACKS)
-                for i in range(0, len(data), 50000):
-                    self.connectionHandler.send_data(data[i:i + 50000], ChatHeader.KARAOKE_SONG)
-                    time.sleep(1)
-            # enable the upload button
-            self.ui.karaoke_upload_song.setEnabled(True)
+            while True:
+                # read a chunk of data (for example, 1024 bytes)
+                data = file.read(10240)
+                if not data:
+                    break  # end of file
+
+                # compress the chunk of data
+                data = zlib.compress(data)
+
+                # send the compressed chunk of data
+                self.connectionHandler.send_data(data, ChatHeader.KARAOKE_SONG)
+
+            # send a special message to indicate the end of the file
+            self.connectionHandler.send_data("EOF", ChatHeader.KARAOKE_SONG)
+
+        # enable the upload button
+        self.ui.karaoke_upload_song.setEnabled(True)
+
+        # set the tips to the UI
+        self.ui.karaoke_tips.setText("Upload completed")
 
     def __onSongListReceived(self, data: ChatData):
         # get the song list
@@ -132,10 +154,12 @@ class KaraokeHandler:
         self.ui.karaoke_stop_curr.setEnabled(True)
         # get the song data
         song_data = data.data
+
         # decompress the data
         decompressed_data = zlib.decompress(song_data)
         # play the song
         self.song_player.audioBuffer.put(decompressed_data)
+        print("Song received, playing")
 
     def __onUserClickStopSong(self):
         # stop the song
@@ -168,3 +192,9 @@ class KaraokeHandler:
         self.ui.karaoke_play.setEnabled(True)
         # disable the stop button
         self.ui.karaoke_stop_curr.setEnabled(False)
+
+    def __RequestSongList(self):
+        # send the request to the server
+        self.connectionHandler.send_data("Request the song list", ChatHeader.KARAOKE_SONG_LIST)
+        # clear the song list
+        self.ui.karaoke_song_list.clear()

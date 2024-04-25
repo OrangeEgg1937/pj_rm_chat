@@ -41,7 +41,7 @@ if __name__ == "__main__":
     connectionHandler = ConnectionHandler(app=app, mainWindow=mainWindow, ui=ui, event_loop=event_loop)
     TextMessageHandler = TextMessageHandler(mainWindow, ui, connectionHandler)
     VoiceRecordHandler = VoiceRecordHandler(mainWindow, ui, connectionHandler)
-    # KaraokeHandler = KaraokeHandler(mainWindow, ui, connectionHandler)
+    KaraokeHandler = KaraokeHandler(mainWindow, ui, connectionHandler)
     voiceChatHandler = VoiceChatHandler(mainWindow, ui, connectionHandler, VoiceRecordHandler)
 
 

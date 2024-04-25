@@ -45,6 +45,9 @@ class ChatData:
         if data["header"] == ChatHeader.AUDIO.value:
             data["data"] = base64.b64decode(data["data"])
 
+        if data["header"] == ChatHeader.KARAOKE_SONG.value:
+            data["data"] = base64.b64decode(data["data"])
+
         if process == -1:
             # auto check the header type
             if data["header"] == ChatHeader.TEXT.value:
